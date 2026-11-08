@@ -22,7 +22,7 @@ function getDbConnection(): PDO {
     $host = defined('DB_HOST') ? DB_HOST : '127.0.0.1';
     $name = defined('DB_NAME') ? DB_NAME : 'game_leaderboard';
     $user = defined('DB_USER') ? DB_USER : 'root';
-    $pass = defined('DB_PASS') ? DB_PASS : 'ihab135798642@';
+    $pass = defined('DB_PASS') ? DB_PASS : '';
     $charset = defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4';
 
     $dsn = "mysql:host={$host};dbname={$name};charset={$charset}";
