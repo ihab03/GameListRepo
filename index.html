@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Leaderboard Service</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-container">
+            <h1 class="app-title">Game Leaderboard Service</h1>
+            <p class="app-subtitle">Track top high scores and submit new records across your favorite games</p>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <div class="app-container">
+            <!-- Leaderboard Card -->
+            <section class="card leaderboard-card" aria-labelledby="leaderboardHeading">
+                <div class="card-header">
+                    <h2 id="leaderboardHeading" class="card-title">Top 10 Leaderboard</h2>
+                    <div class="selector-group">
+                        <label for="gameSelector" class="selector-label">Choose Game:</label>
+                        <select id="gameSelector" class="game-select" aria-label="Select Game to view scores">
+                            <option value="" disabled selected>Loading games...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="leaderboardStatus" class="status-message" aria-live="polite"></div>
+
+                <div class="table-responsive">
+                    <table id="leaderboardTable" class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="th-rank">Rank</th>
+                                <th scope="col" class="th-player">Player</th>
+                                <th scope="col" class="th-score">Score</th>
+                                <th scope="col" class="th-date">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody">
+                            <!-- Populated dynamically by JavaScript using textContent -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="emptyState" class="empty-state hidden">
+                    <p>No scores recorded for this game yet. Be the first to submit!</p>
+                </div>
+            </section>
+
+            <!-- Submit Score Card -->
+            <section class="card form-card" aria-labelledby="formHeading">
+                <div class="card-header">
+                    <h2 id="formHeading" class="card-title">Submit a Score</h2>
+                    <p class="card-desc">Enter your score to compete on the global leaderboard</p>
+                </div>
+
+                <div id="formFeedback" class="form-feedback hidden" role="alert" aria-live="polite"></div>
+
+                <form id="scoreForm" class="score-form" novalidate>
+                    <div class="form-group">
+                        <label for="formGameInput" class="form-label">Game</label>
+                        <input 
+                            type="text" 
+                            id="formGameInput" 
+                            name="game" 
+                            class="form-input" 
+                            list="gamesDatalist" 
+                            placeholder="Select or type game name" 
+                            maxlength="100" 
+                            autocomplete="off" 
+                            required
+                        >
+                        <datalist id="gamesDatalist"></datalist>
+                        <small class="form-hint">Pick an existing game or enter a new one</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerNameInput" class="form-label">Player Name</label>
+                        <input 
+                            type="text" 
+                            id="playerNameInput" 
+                            name="player_name" 
+                            class="form-input" 
+                            placeholder="Enter player handle (e.g. AcePilot)" 
+                            maxlength="100" 
+                            autocomplete="off" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scoreInput" class="form-label">Score</label>
+                        <input 
+                            type="number" 
+                            id="scoreInput" 
+                            name="score" 
+                            class="form-input" 
+                            min="0" 
+                            step="1" 
+                            placeholder="e.g. 9850" 
+                            required
+                        >
+                        <small class="form-hint">Whole non-negative number (&ge; 0)</small>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary">
+                        <span class="btn-text">Submit Score</span>
+                    </button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>Option A: Game Leaderboard Service &bull; HTML5 &bull; CSS3 &bull; Vanilla JS &bull; PHP &bull; MySQL</p>
+    </footer>
+</body>
+</html>
+
