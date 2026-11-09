@@ -89,8 +89,8 @@ function validateScoreSubmission(array $input): ?string {
         return 'Score is required.';
     }
 
-    // Reject booleans or arrays before integer validation
-    if (is_bool($input['score']) || is_array($input['score'])) {
+    // Reject booleans, floats, or arrays before integer validation
+    if (is_bool($input['score']) || is_float($input['score']) || is_array($input['score'])) {
         return 'Score must be a valid integer.';
     }
 
