@@ -3,29 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Leaderboard Service</title>
+    <title>Game Leaderboard Platform</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="js/app.js" defer></script>
+    <script src="js/chart.js" defer></script>
 </head>
 <body>
+    <!-- Top Navigation & Auth Bar -->
     <header class="app-header">
         <div class="header-container">
-            <h1 class="app-title">Game Leaderboard Service</h1>
-            <p class="app-subtitle">Track top high scores and submit new records across your favorite games</p>
+            <div class="header-content">
+                <h1 class="app-title">Game Leaderboard Platform</h1>
+                <p class="app-subtitle">Global competitive rankings, custom time-range filtration &amp; verified score submissions</p>
+            </div>
+
+            <div class="header-actions">
+                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Dark / Light Mode" title="Toggle Theme">
+                    <span id="themeToggleIcon" class="theme-toggle-icon">🌙</span>
+                    <span id="themeToggleText" class="theme-toggle-text">Dark</span>
+                </button>
+                <a href="test-simulator.html" class="nav-btn">⚡ 100 Scores Simulator</a>
+
+                <!-- Auth Widget: Populated dynamically by app.js -->
+                <div id="authWidget" class="auth-widget">
+                    <div id="authLoggedOut" class="auth-buttons">
+                        <button type="button" id="btnOpenAuth" class="btn btn-outline-primary">Log In / Sign Up</button>
+                    </div>
+
+                    <div id="authLoggedIn" class="user-session hidden">
+                        <div class="user-profile">
+                            <span class="user-icon">👤</span>
+                            <span id="sessionUsername" class="user-name">User</span>
+                            <span id="sessionRoleBadge" class="badge-role">Player</span>
+                        </div>
+                        <button type="button" id="btnLogout" class="btn btn-sm btn-secondary">Log Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Evaluation Credentials Hint -->
+        <div class="demo-credentials-banner">
+            <span>Demo Credentials:</span>
+            <button type="button" class="demo-chip" data-user="admin" data-pass="Admin123!">Admin (admin / Admin123!)</button>
+            <button type="button" class="demo-chip" data-user="player1" data-pass="Player123!">Player (player1 / Player123!)</button>
         </div>
     </header>
 
+    <!-- Main Content Area -->
     <main class="app-main">
         <div class="app-container">
-            <!-- Leaderboard Card -->
+
+            <!-- Admin Moderation Queue (Rendered only when logged in as Admin) -->
+            <section id="adminDashboard" class="card admin-card hidden" aria-labelledby="adminHeading">
+                <div class="card-header">
+                    <div>
+                        <h2 id="adminHeading" class="card-title">🛡️ Admin Verification Queue</h2>
+                        <p class="card-desc">Review and approve submitted scores before they appear on the public leaderboard</p>
+                    </div>
+                    <div class="admin-header-actions">
+                        <button type="button" id="btnApproveAll" class="btn btn-sm btn-success">Approve All Pending</button>
+                    </div>
+                </div>
+
+                <div class="admin-tabs-bar">
+                    <div class="status-tabs" role="tablist">
+                        <button type="button" class="admin-tab active" data-status="pending">Pending (<span id="adminCountPending">0</span>)</button>
+                        <button type="button" class="admin-tab" data-status="approved">Approved (<span id="adminCountApproved">0</span>)</button>
+                        <button type="button" class="admin-tab" data-status="rejected">Rejected (<span id="adminCountRejected">0</span>)</button>
+                    </div>
+                </div>
+
+                <div id="adminQueueStatus" class="status-message" aria-live="polite"></div>
+
+                <div class="table-responsive">
+                    <table class="leaderboard-table admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 50px;">ID</th>
+                                <th scope="col">Game</th>
+                                <th scope="col">Player</th>
+                                <th scope="col" style="text-align: right;">Score</th>
+                                <th scope="col">Submitted</th>
+                                <th scope="col" style="text-align: center; width: 160px;">Verification Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminQueueBody">
+                            <!-- Populated dynamically via textContent -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Leaderboard Card with Comprehensive Filtration -->
             <section class="card leaderboard-card" aria-labelledby="leaderboardHeading">
                 <div class="card-header">
-                    <h2 id="leaderboardHeading" class="card-title">Top 10 Leaderboard</h2>
-                    <div class="selector-group">
-                        <label for="gameSelector" class="selector-label">Choose Game:</label>
-                        <select id="gameSelector" class="game-select" aria-label="Select Game to view scores">
-                            <option value="" disabled selected>Loading games...</option>
-                        </select>
+                    <h2 id="leaderboardHeading" class="card-title">Leaderboard Rankings</h2>
+                    <span id="activeFilterBadge" class="filter-summary-badge">All Games &bull; Top 10 &bull; All-Time</span>
+                </div>
+
+                <!-- Comprehensive Filtration Bar -->
+                <div class="filtration-section">
+                    <div class="filter-row">
+                        <!-- Game Filter -->
+                        <div class="filter-field">
+                            <label for="gameSelector" class="filter-label">Game</label>
+                            <select id="gameSelector" class="game-select">
+                                <option value="all">All Games</option>
+                            </select>
+                        </div>
+
+                        <!-- Limit Filter -->
+                        <div class="filter-field">
+                            <label for="limitSelector" class="filter-label">Display Limit</label>
+                            <select id="limitSelector" class="game-select">
+                                <option value="10" selected>Top 10</option>
+                                <option value="15">Top 15</option>
+                                <option value="25">Top 25</option>
+                                <option value="50">Top 50</option>
+                                <option value="all">All Scores</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Order -->
+                        <div class="filter-field">
+                            <label for="sortSelector" class="filter-label">Sort Order</label>
+                            <select id="sortSelector" class="game-select">
+                                <option value="score_desc" selected>Highest Score First</option>
+                                <option value="score_asc">Lowest Score First</option>
+                                <option value="newest">Newest Approved First</option>
+                            </select>
+                        </div>
+
+                        <!-- Player Search -->
+                        <div class="filter-field filter-search">
+                            <label for="searchInput" class="filter-label">Search Player</label>
+                            <div class="search-input-wrapper">
+                                <input type="text" id="searchInput" class="form-input" placeholder="Filter by player..." maxlength="100" autocomplete="off">
+                                <button type="button" id="btnClearSearch" class="btn-clear-search hidden" title="Clear search">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time-Range Segmented Tabs -->
+                    <div class="filter-row filter-row-periods">
+                        <span class="filter-label">Timeframe:</span>
+                        <div class="period-filter" role="tablist" aria-label="Time period filter">
+                            <button type="button" class="period-btn active" data-period="all" role="tab" aria-selected="true">All-Time</button>
+                            <button type="button" class="period-btn" data-period="week" role="tab" aria-selected="false">This Week</button>
+                            <button type="button" class="period-btn" data-period="today" role="tab" aria-selected="false">Today</button>
+                        </div>
                     </div>
                 </div>
 
@@ -36,6 +163,7 @@
                         <thead>
                             <tr>
                                 <th scope="col" class="th-rank">Rank</th>
+                                <th scope="col" id="thGameCol" class="th-game">Game</th>
                                 <th scope="col" class="th-player">Player</th>
                                 <th scope="col" class="th-score">Score</th>
                                 <th scope="col" class="th-date">Date</th>
@@ -48,20 +176,90 @@
                 </div>
 
                 <div id="emptyState" class="empty-state hidden">
-                    <p>No scores recorded for this game yet. Be the first to submit!</p>
+                    <p id="emptyStateText">No approved scores match your selected filters.</p>
+                </div>
+
+                <!-- Player Rank Lookup Tool -->
+                <div class="rank-lookup-card">
+                    <h3 class="rank-lookup-title">🔍 Check Individual Player Rank</h3>
+                    <form id="rankForm" class="rank-form" novalidate>
+                        <div class="rank-input-group">
+                            <input 
+                                type="text" 
+                                id="rankPlayerInput" 
+                                class="form-input" 
+                                placeholder="Enter exact player username (e.g. AcePilot)" 
+                                maxlength="100" 
+                                autocomplete="off" 
+                                required
+                            >
+                            <button type="submit" id="rankBtn" class="btn btn-secondary">
+                                <span class="rank-btn-text">Find Rank</span>
+                            </button>
+                        </div>
+                    </form>
+                    <div id="rankResult" class="rank-result hidden" aria-live="polite"></div>
                 </div>
             </section>
 
-            <!-- Submit Score Card -->
+            <!-- Score Analytics & Trends Chart Section -->
+            <section id="analyticsSection" class="card chart-card" aria-labelledby="chartHeading">
+                <div class="card-header chart-card-header">
+                    <div>
+                        <h2 id="chartHeading" class="card-title">📈 Scores Over Time Analytics</h2>
+                        <p class="card-desc">Interactive daily score trends and submission activity</p>
+                    </div>
+                    <div class="chart-controls">
+                        <!-- Metric Selector -->
+                        <div class="chart-control-field">
+                            <label for="chartMetricSelect" class="sr-only">Metric</label>
+                            <select id="chartMetricSelect" class="form-input chart-select">
+                                <option value="highest_score" selected>Highest Score</option>
+                                <option value="average_score">Average Score</option>
+                                <option value="total_submissions">Total Submissions</option>
+                            </select>
+                        </div>
+                        <!-- Timeframe Selector -->
+                        <div class="chart-timeframe-group" role="group" aria-label="Chart timeframe">
+                            <button type="button" class="chart-days-btn" data-days="7">7D</button>
+                            <button type="button" class="chart-days-btn active" data-days="30">30D</button>
+                            <button type="button" class="chart-days-btn" data-days="90">90D</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-canvas-container">
+                    <canvas id="scoreChart" width="800" height="260"></canvas>
+                </div>
+                <div class="chart-footer">
+                    <span id="chartStatus" class="chart-status-text">Loading chart analytics...</span>
+                    <span class="chart-legend-indicator">💡 Hover over data points for snapshot details</span>
+                </div>
+            </section>
+
+            <!-- Submit Score Section -->
             <section class="card form-card" aria-labelledby="formHeading">
                 <div class="card-header">
                     <h2 id="formHeading" class="card-title">Submit a Score</h2>
-                    <p class="card-desc">Enter your score to compete on the global leaderboard</p>
+                    <p class="card-desc">Compete for the top rankings on verified leaderboards</p>
                 </div>
 
                 <div id="formFeedback" class="form-feedback hidden" role="alert" aria-live="polite"></div>
 
+                <!-- Unauthenticated Notice -->
+                <div id="authRequiredBox" class="auth-required-box hidden">
+                    <div class="lock-icon">🔒</div>
+                    <h3>Authentication Required</h3>
+                    <p>You must log in to submit a verified score to the leaderboard.</p>
+                    <button type="button" id="btnPromptAuth" class="btn btn-primary" style="margin-top: 0.75rem;">Log In / Create Account</button>
+                </div>
+
+                <!-- Authenticated Score Form -->
                 <form id="scoreForm" class="score-form" novalidate>
+                    <div class="user-submit-badge">
+                        <span>Submitting as:</span>
+                        <strong id="submitUserLabel">Guest</strong>
+                    </div>
+
                     <div class="form-group">
                         <label for="formGameInput" class="form-label">Game</label>
                         <input 
@@ -76,20 +274,20 @@
                             required
                         >
                         <datalist id="gamesDatalist"></datalist>
-                        <small class="form-hint">Pick an existing game or enter a new one</small>
+                        <small class="form-hint">Pick an existing game or enter a new title</small>
                     </div>
 
-                    <div class="form-group">
-                        <label for="playerNameInput" class="form-label">Player Name</label>
+                    <!-- Admin Only custom player name override -->
+                    <div id="adminPlayerNameGroup" class="form-group hidden">
+                        <label for="playerNameOverrideInput" class="form-label">Custom Player Name (Admin Override)</label>
                         <input 
                             type="text" 
-                            id="playerNameInput" 
+                            id="playerNameOverrideInput" 
                             name="player_name" 
                             class="form-input" 
-                            placeholder="Enter player handle (e.g. AcePilot)" 
+                            placeholder="Leave blank to use admin username" 
                             maxlength="100" 
-                            autocomplete="off" 
-                            required
+                            autocomplete="off"
                         >
                     </div>
 
@@ -101,24 +299,69 @@
                             name="score" 
                             class="form-input" 
                             min="0" 
+                            max="2147483647" 
                             step="1" 
                             placeholder="e.g. 9850" 
                             required
                         >
-                        <small class="form-hint">Whole non-negative number (&ge; 0)</small>
+                        <small class="form-hint">Whole number between 0 and 2,147,483,647</small>
                     </div>
 
                     <button type="submit" id="submitBtn" class="btn btn-primary">
-                        <span class="btn-text">Submit Score</span>
+                        <span class="btn-text">Submit Score for Verification</span>
                     </button>
                 </form>
             </section>
         </div>
     </main>
 
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="modal-card">
+            <button type="button" id="btnCloseAuthModal" class="modal-close-btn" aria-label="Close dialog">&times;</button>
+
+            <div class="modal-tabs">
+                <button type="button" id="tabLogin" class="modal-tab active">Log In</button>
+                <button type="button" id="tabRegister" class="modal-tab">Create Account</button>
+            </div>
+
+            <div id="authModalFeedback" class="form-feedback hidden" role="alert"></div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form" novalidate>
+                <h3 id="authModalTitle" class="sr-only">User Login</h3>
+                <div class="form-group">
+                    <label for="loginUsername" class="form-label">Username</label>
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
+                </div>
+                <button type="submit" id="btnLoginSubmit" class="btn btn-primary" style="width: 100%;">
+                    <span>Log In</span>
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form hidden" novalidate>
+                <div class="form-group">
+                    <label for="registerUsername" class="form-label">Username (3–50 chars, alphanumeric)</label>
+                    <input type="text" id="registerUsername" class="form-input" placeholder="Choose a username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword" class="form-label">Password (Min. 6 chars)</label>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Create a password" autocomplete="new-password" required>
+                </div>
+                <button type="submit" id="btnRegisterSubmit" class="btn btn-primary" style="width: 100%;">
+                    <span>Create Player Account</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <footer class="app-footer">
-        <p>Option A: Game Leaderboard Service &bull; HTML5 &bull; CSS3 &bull; Vanilla JS &bull; PHP &bull; MySQL</p>
+        <p>Option A: Game Leaderboard Platform &bull; HTML5 &bull; CSS3 &bull; Vanilla JS &bull; PHP &bull; MySQL &bull; <a href="test-simulator.html" class="footer-link">Test Simulator</a></p>
     </footer>
 </body>
 </html>
-

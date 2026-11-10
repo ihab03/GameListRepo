@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Random Scores Simulator - Game Leaderboard Service</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/test-simulator.js" defer></script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-container">
+            <div class="header-content">
+                <h1 class="app-title">Leaderboard Traffic &amp; Stress Simulator</h1>
+                <p class="app-subtitle">Automated high-volume score generation, concurrency testing &amp; validation battery</p>
+            </div>
+            <nav class="header-nav" style="display: flex; align-items: center; gap: 0.75rem;">
+                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Dark / Light Mode" title="Toggle Theme">
+                    <span id="themeToggleIcon" class="theme-toggle-icon">🌙</span>
+                    <span id="themeToggleText" class="theme-toggle-text">Dark</span>
+                </button>
+                <a href="index.html" class="nav-btn">&larr; Back to Leaderboard</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <div class="sim-container">
+            <!-- Controls Card -->
+            <section class="card" aria-labelledby="controlsHeading">
+                <div class="card-header">
+                    <h2 id="controlsHeading" class="card-title">Simulator Controls</h2>
+                    <span class="card-desc">Configure target games and launch automated score submission batches</span>
+                </div>
+
+                <!-- Session & Auth Notice -->
+                <div id="simAuthNotice" class="form-feedback error hidden">
+                    Authentication Required: You are not logged in and Secret API Key is disabled. Submissions will return HTTP 401. Please enable the Secret API Key or <a href="index.html" class="footer-link">log in on the main page</a>.
+                </div>
+
+                <div class="user-submit-badge">
+                    <span>Active Auth Mode:</span>
+                    <strong id="simUserSession">Checking session...</strong>
+                    <label style="margin-left: auto; display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer;">
+                        <input type="checkbox" id="chkUseApiKey" checked>
+                        <span>Use Secret API Key (<code>wolves-secret-key-2026</code>)</span>
+                    </label>
+                </div>
+
+                <div class="sim-controls" style="margin-top: 1rem;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="simGameSelect" class="form-label">Target Game</label>
+                        <select id="simGameSelect" class="game-select" style="width: 100%;">
+                            <option value="__RANDOM__">Random Across All Games</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="width: 140px;">
+                        <label for="simBatchCount" class="form-label">Total Submissions</label>
+                        <input type="number" id="simBatchCount" class="form-input" value="100" min="1" max="500" step="1">
+                    </div>
+
+                    <div class="sim-actions">
+                        <button type="button" id="btnStartBatch" class="btn btn-primary">
+                            <span>🚀 Send 100 Random Scores</span>
+                        </button>
+                        <button type="button" id="btnRunEdgeCases" class="btn btn-secondary">
+                            <span>🧪 Test Invalid &amp; Out-of-Range</span>
+                        </button>
+                        <button type="button" id="btnStop" class="btn btn-danger" disabled>
+                            <span>🛑 Stop</span>
+                        </button>
+                        <button type="button" id="btnClearLog" class="btn btn-secondary">
+                            <span>🧹 Clear Log</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics Card -->
+            <section class="card" aria-labelledby="metricsHeading">
+                <div class="card-header">
+                    <h2 id="metricsHeading" class="card-title">Execution Metrics</h2>
+                    <span id="simStatusText" class="card-desc">Ready to start simulator</span>
+                </div>
+
+                <div class="progress-container">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Progress</div>
+                        <div class="metric-value"><span id="metricSent">0</span> / <span id="metricTotal">100</span></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Success (201 Created)</div>
+                        <div class="metric-value success" id="metricSuccess">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Rejected / Errors (400/401/500)</div>
+                        <div class="metric-value error" id="metricErrors">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Avg Latency</div>
+                        <div class="metric-value" id="metricLatency">0 ms</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Table Log Card -->
+            <section class="card" aria-labelledby="logHeading">
+                <div class="card-header">
+                    <h2 id="logHeading" class="card-title">Live Submission Log</h2>
+                    <span class="card-desc">Stream of individual HTTP request payloads and responses (XSS-safe textContent)</span>
+                </div>
+
+                <div class="log-scroll-wrapper">
+                    <table class="leaderboard-table sim-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 50px;">#</th>
+                                <th scope="col" style="width: 85px;">Time</th>
+                                <th scope="col">Game</th>
+                                <th scope="col">Player</th>
+                                <th scope="col" style="text-align: right;">Score</th>
+                                <th scope="col" style="text-align: center; width: 100px;">Status</th>
+                                <th scope="col">Server Response</th>
+                            </tr>
+                        </thead>
+                        <tbody id="simLogBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    No requests dispatched yet. Click "Send 100 Random Scores" to begin.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>Option A: Game Leaderboard Platform &bull; High-Volume Stress Simulator &bull; <a href="index.html" class="footer-link">&larr; Return to Leaderboard</a></p>
+    </footer>
+</body>
+</html>

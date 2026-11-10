@@ -21,12 +21,16 @@ if (!defined('DB_PASS')) {
 if (!defined('DB_CHARSET')) {
     define('DB_CHARSET', 'utf8mb4');
 }
+if (!defined('API_SECRET_KEY')) {
+    define('API_SECRET_KEY', 'wolves-secret-key-2026');
+}
 
 return [
-    'host'    => DB_HOST,
-    'name'    => DB_NAME,
-    'user'    => DB_USER,
-    'pass'    => DB_PASS,
-    'charset' => DB_CHARSET,
+    'host'           => DB_HOST,
+    'name'           => DB_NAME,
+    'user'           => DB_USER,
+    'pass'           => DB_PASS,
+    'charset'        => DB_CHARSET,
+    'api_secret_key' => API_SECRET_KEY,
 ];
 

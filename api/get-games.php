@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    $selectStatement = $pdo->prepare('SELECT DISTINCT game FROM scores ORDER BY game ASC');
+    $selectStatement = $pdo->prepare("SELECT DISTINCT game FROM scores WHERE status = 'approved' ORDER BY game ASC");
     $selectStatement->execute();
     $games = $selectStatement->fetchAll(PDO::FETCH_COLUMN);
 
@@ -34,4 +34,3 @@ try {
         'message' => 'Failed to fetch games.'
     ]);
 }
-
