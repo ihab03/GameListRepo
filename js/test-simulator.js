@@ -254,7 +254,7 @@ async function handleStartRandomBatch() {
     const totalRequests = isNaN(countInput) || countInput <= 0 ? 100 : Math.min(500, countInput);
 
     const selectedTarget = simGameSelect ? simGameSelect.value : '__RANDOM__';
-    const gamePool = availableGames.length > 0 ? availableGames : ['Space Blaster', 'Dungeon Runner', 'Drift King'];
+    const gamePool = availableGames.length > 0 ? availableGames : ['Tetris Effect', 'Pac-Man', 'Subway Surfers', 'Vampire Survivors', 'Trackmania'];
 
     setSimulatorRunningState(true);
     resetMetrics(totalRequests);
@@ -307,19 +307,19 @@ async function handleRunEdgeCaseBattery() {
     setSimulatorRunningState(true);
 
     const edgeCases = [
-        { label: 'Negative score (-1)', game: 'Space Blaster', player: 'NegativeTester', score: -1, expectStatus: 400 },
-        { label: 'String negative ("-50")', game: 'Space Blaster', player: 'StringNegTester', score: '-50', expectStatus: 400 },
-        { label: 'Alpha score ("abc")', game: 'Space Blaster', player: 'AlphaTester', score: 'abc', expectStatus: 400 },
-        { label: 'Float score (12.34)', game: 'Space Blaster', player: 'FloatTester', score: 12.34, expectStatus: 400 },
-        { label: 'Null score', game: 'Space Blaster', player: 'NullTester', score: null, expectStatus: 400 },
-        { label: 'Boolean score (true)', game: 'Space Blaster', player: 'BoolTester', score: true, expectStatus: 400 },
-        { label: 'Array score ([100])', game: 'Space Blaster', player: 'ArrayTester', score: [100], expectStatus: 400 },
-        { label: '32-bit INT overflow (2147483648)', game: 'Space Blaster', player: 'OverflowTester', score: 2147483648, expectStatus: 400 },
-        { label: 'Gigantic string overflow ("999999999999999")', game: 'Space Blaster', player: 'GiganticTester', score: '999999999999999', expectStatus: 400 },
-        { label: 'Whitespace player ("   ")', game: 'Space Blaster', player: '   ', score: 5000, expectStatus: 400 },
+        { label: 'Negative score (-1)', game: 'Tetris Effect', player: 'NegativeTester', score: -1, expectStatus: 400 },
+        { label: 'String negative ("-50")', game: 'Tetris Effect', player: 'StringNegTester', score: '-50', expectStatus: 400 },
+        { label: 'Alpha score ("abc")', game: 'Tetris Effect', player: 'AlphaTester', score: 'abc', expectStatus: 400 },
+        { label: 'Float score (12.34)', game: 'Tetris Effect', player: 'FloatTester', score: 12.34, expectStatus: 400 },
+        { label: 'Null score', game: 'Tetris Effect', player: 'NullTester', score: null, expectStatus: 400 },
+        { label: 'Boolean score (true)', game: 'Tetris Effect', player: 'BoolTester', score: true, expectStatus: 400 },
+        { label: 'Array score ([100])', game: 'Tetris Effect', player: 'ArrayTester', score: [100], expectStatus: 400 },
+        { label: '32-bit INT overflow (2147483648)', game: 'Tetris Effect', player: 'OverflowTester', score: 2147483648, expectStatus: 400 },
+        { label: 'Gigantic string overflow ("999999999999999")', game: 'Tetris Effect', player: 'GiganticTester', score: '999999999999999', expectStatus: 400 },
+        { label: 'Whitespace player ("   ")', game: 'Tetris Effect', player: '   ', score: 5000, expectStatus: 400 },
         { label: 'Whitespace game ("   ")', game: '   ', player: 'ValidPlayer', score: 5000, expectStatus: 400 },
-        { label: 'Valid Zero score (0)', game: 'Space Blaster', player: 'ZeroTester', score: 0, expectStatus: 201 },
-        { label: 'Max 32-bit bound (2147483647)', game: 'Space Blaster', player: 'MaxBoundTester', score: 2147483647, expectStatus: 201 },
+        { label: 'Valid Zero score (0)', game: 'Tetris Effect', player: 'ZeroTester', score: 0, expectStatus: 201 },
+        { label: 'Max 32-bit bound (2147483647)', game: 'Tetris Effect', player: 'MaxBoundTester', score: 2147483647, expectStatus: 201 },
     ];
 
     const totalRequests = edgeCases.length;

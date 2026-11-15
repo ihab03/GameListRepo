@@ -286,7 +286,7 @@ Leaderboard data can be exported in one click:
           "recent_submissions": [
               {
                   "id": 214,
-                  "game": "Space Blaster",
+                  "game": "Tetris Effect",
                   "score": 5757,
                   "status": "approved",
                   "created_at": "2026-11-10 10:50:42"
@@ -338,7 +338,7 @@ Leaderboard data can be exported in one click:
           "total_verified_scores": 66,
           "active_players": 65,
           "pending_scores_count": 0,
-          "most_played_game": "Space Blaster"
+          "most_played_game": "Tetris Effect"
       },
       "audit_logs": [
           {
@@ -347,7 +347,7 @@ Leaderboard data can be exported in one click:
               "admin_username": "admin",
               "action": "add_game",
               "target_id": 6,
-              "details": "Registered new studio game 'Galactic Odyssey'",
+              "details": "Registered new studio game 'Geometry Dash'",
               "created_at": "2026-11-14 04:30:00"
           }
       ]
@@ -365,13 +365,13 @@ Leaderboard data can be exported in one click:
   ```json
   {
       "status": "success",
-      "games": ["Cyber Strike", "Drift King", "Dungeon Runner", "Space Blaster"],
+      "games": ["Pac-Man", "Subway Surfers", "Tetris Effect", "Trackmania", "Vampire Survivors"],
       "data": [
           {
               "id": 1,
-              "title": "Space Blaster",
-              "slug": "space-blaster",
-              "genre": "Arcade Shooter",
+              "title": "Tetris Effect",
+              "slug": "tetris-effect",
+              "genre": "Puzzle",
               "is_active": 1,
               "total_scores": 45
           }
@@ -391,12 +391,12 @@ Leaderboard data can be exported in one click:
   ```json
   {
       "status": "success",
-      "filters": { "game": "Space Blaster", "limit": "10", "period": "all", "sort": "score_desc", "search": "" },
+      "filters": { "game": "Tetris Effect", "limit": "10", "period": "all", "sort": "score_desc", "search": "" },
       "total_returned": 1,
       "scores": [
           {
               "id": 212,
-              "game": "Space Blaster",
+              "game": "Tetris Effect",
               "player_name": "ShadowFox455",
               "score": 469877,
               "created_at": "2026-11-10 10:50:41"
@@ -415,14 +415,14 @@ Leaderboard data can be exported in one click:
       "player_name": "AcePilot",
       "summary": {
           "total_approved_submissions": 5,
-          "highest_score_overall": 98500,
+          "highest_score_overall": 985000,
           "first_seen": "2026-10-15 08:00:00",
           "last_seen": "2026-11-12 14:20:00"
       },
       "games": [
           {
-              "game": "Space Blaster",
-              "best_score": 98500,
+              "game": "Tetris Effect",
+              "best_score": 985000,
               "submissions_count": 3,
               "rank": 1
           }
@@ -430,8 +430,8 @@ Leaderboard data can be exported in one click:
       "recent_scores": [
           {
               "id": 142,
-              "game": "Space Blaster",
-              "score": 98500,
+              "game": "Tetris Effect",
+              "score": 985000,
               "created_at": "2026-11-12 14:20:00"
           }
       ]
@@ -443,14 +443,14 @@ Leaderboard data can be exported in one click:
 - **Headers**:
   - `Content-Type: application/json`
   - `X-API-Key: hyper-arena-secret-key-2026` *(optional for game engines)*
-- **Body**: `{"game": "Space Blaster", "score": 12500}`
+- **Body**: `{"game": "Tetris Effect", "score": 12500}`
 - **Rate Limit**: 10 requests / 60 seconds per IP.
 - **Response (`201 Created`)**:
   ```json
   {
       "status": "success",
       "message": "Score submitted successfully. Pending admin approval.",
-      "data": { "id": 240, "game": "Space Blaster", "player_name": "player1", "score": 12500, "status": "pending" }
+      "data": { "id": 240, "game": "Tetris Effect", "player_name": "player1", "score": 12500, "status": "pending" }
   }
   ```
 

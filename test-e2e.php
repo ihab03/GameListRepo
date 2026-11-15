@@ -120,7 +120,7 @@ runTest('Initial session should be unauthenticated', function () use ($client) {
 // 2. Reject unauthenticated score submission
 runTest('Unauthenticated score submission must return HTTP 401', function () use ($client) {
     $res = $client->request('POST', '/api/post-score.php', [
-        'game' => 'Space Blaster',
+        'game' => 'Tetris Effect',
         'player_name' => 'Ghost',
         'score' => 5000,
     ]);
@@ -177,7 +177,7 @@ runTest('Session check for newly registered user', function () use ($client, $e2
 // 7. Submit score as authenticated player -> status: pending
 runTest('Score submitted by player is saved as pending and returns HTTP 201', function () use ($client, &$createdScoreId) {
     $res = $client->request('POST', '/api/post-score.php', [
-        'game' => 'Space Blaster',
+        'game' => 'Tetris Effect',
         'score' => 8888,
     ]);
     if ($res['status'] !== 201) return "Expected status 201, got {$res['status']} with body: {$res['body']}";
@@ -189,7 +189,7 @@ runTest('Score submitted by player is saved as pending and returns HTTP 201', fu
 
 // 8. Verify pending score is NOT on public leaderboard
 runTest('Pending score must NOT appear on the public leaderboard', function () use ($client, $e2eUsername) {
-    $res = $client->request('GET', '/api/get-scores.php?game=Space%20Blaster&limit=all');
+    $res = $client->request('GET', '/api/get-scores.php?game=Tetris%20Effect&limit=all');
     if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
     $scores = $res['json']['scores'] ?? [];
     foreach ($scores as $s) {
@@ -270,7 +270,7 @@ runTest('Admin approves pending score', function () use ($client, &$createdScore
 
 // 15. Verify approved score now appears on public leaderboard
 runTest('Approved score now appears on the public leaderboard', function () use ($client, $e2eUsername) {
-    $res = $client->request('GET', '/api/get-scores.php?game=Space%20Blaster&limit=all');
+    $res = $client->request('GET', '/api/get-scores.php?game=Tetris%20Effect&limit=all');
     if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
     $scores = $res['json']['scores'] ?? [];
     $found = false;
@@ -286,7 +286,7 @@ runTest('Approved score now appears on the public leaderboard', function () use 
 
 // 16. Player rank lookup works for the approved score
 runTest('Rank lookup returns correct rank for the approved score', function () use ($client, $e2eUsername) {
-    $res = $client->request('GET', "/api/get-rank.php?game=Space%20Blaster&player_name={$e2eUsername}");
+    $res = $client->request('GET', "/api/get-rank.php?game=Tetris%20Effect&player_name={$e2eUsername}");
     if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
     if ($res['json']['found'] !== true) return "Expected found=true";
     if ((int)$res['json']['best_score'] !== 8888) return "Expected best_score 8888, got " . ($res['json']['best_score'] ?? 'null');
@@ -296,25 +296,25 @@ runTest('Rank lookup returns correct rank for the approved score', function () u
 // 17. Filtration tests
 runTest('Filtration: limit=10, limit=15, limit=25, limit=all', function () use ($client) {
     foreach ([10, 15, 25] as $lim) {
-        $res = $client->request('GET', "/api/get-scores.php?game=Space%20Blaster&limit={$lim}");
+        $res = $client->request('GET', "/api/get-scores.php?game=Tetris%20Effect&limit={$lim}");
         if ($res['status'] !== 200) return "limit={$lim} returned status {$res['status']}";
         if (count($res['json']['scores']) > $lim) return "limit={$lim} returned more than {$lim} scores";
     }
-    $resAll = $client->request('GET', "/api/get-scores.php?game=Space%20Blaster&limit=all");
+    $resAll = $client->request('GET', "/api/get-scores.php?game=Tetris%20Effect&limit=all");
     if ($resAll['status'] !== 200) return "limit=all returned status {$resAll['status']}";
     return true;
 });
 
 runTest('Filtration: sort=newest, sort=score_asc, sort=score_desc', function () use ($client) {
     // Score desc
-    $resDesc = $client->request('GET', "/api/get-scores.php?game=Space%20Blaster&sort=score_desc");
+    $resDesc = $client->request('GET', "/api/get-scores.php?game=Tetris%20Effect&sort=score_desc");
     $scoresDesc = array_column($resDesc['json']['scores'], 'score');
     $sortedDesc = $scoresDesc;
     rsort($sortedDesc, SORT_NUMERIC);
     if ($scoresDesc !== $sortedDesc) return "sort=score_desc was not sorted descending";
 
     // Score asc
-    $resAsc = $client->request('GET', "/api/get-scores.php?game=Space%20Blaster&sort=score_asc");
+    $resAsc = $client->request('GET', "/api/get-scores.php?game=Tetris%20Effect&sort=score_asc");
     $scoresAsc = array_column($resAsc['json']['scores'], 'score');
     $sortedAsc = $scoresAsc;
     sort($sortedAsc, SORT_NUMERIC);
@@ -324,7 +324,7 @@ runTest('Filtration: sort=newest, sort=score_asc, sort=score_desc', function () 
 });
 
 runTest('Filtration: search=e2e_tester returns matching player only', function () use ($client, $e2eUsername) {
-    $res = $client->request('GET', "/api/get-scores.php?game=Space%20Blaster&search=" . urlencode($e2eUsername));
+    $res = $client->request('GET', "/api/get-scores.php?game=Tetris%20Effect&search=" . urlencode($e2eUsername));
     if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
     $scores = $res['json']['scores'] ?? [];
     if (empty($scores)) return "Expected to find player in search results";
@@ -360,7 +360,7 @@ $apiKeyScoreId = null;
 runTest('Secret API Key: Invalid key without session returns HTTP 401', function () use ($client) {
     $client->clearCookies(); // ensure unauthenticated
     $res = $client->request('POST', '/api/post-score.php', [
-        'game' => 'Space Blaster',
+        'game' => 'Tetris Effect',
         'score' => 5000,
     ], ['X-API-Key: invalid-key-xyz']);
     if ($res['status'] !== 401) return "Expected status 401, got {$res['status']}";
@@ -371,7 +371,7 @@ runTest('Secret API Key: Invalid key without session returns HTTP 401', function
 runTest('Secret API Key: Valid key allows submission with pre-approval (HTTP 201)', function () use ($client, &$apiKeyScoreId) {
     $client->clearCookies(); // ensure unauthenticated
     $res = $client->request('POST', '/api/post-score.php', [
-        'game' => 'Space Blaster',
+        'game' => 'Tetris Effect',
         'player_name' => 'ServerBot_E2E',
         'score' => 12900,
     ], ['X-API-Key: hyper-arena-secret-key-2026']);
@@ -384,10 +384,10 @@ runTest('Secret API Key: Valid key allows submission with pre-approval (HTTP 201
 
 // 20. Chart Analytics API: Valid game and days returns chronological points
 runTest('Chart API: GET /api/get-chart-data.php returns chronological daily snapshots', function () use ($client) {
-    $res = $client->request('GET', '/api/get-chart-data.php?game=Space%20Blaster&days=30');
+    $res = $client->request('GET', '/api/get-chart-data.php?game=Tetris%20Effect&days=30');
     if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
     if (!isset($res['json']['data']) || !is_array($res['json']['data'])) return "Expected data array";
-    if (empty($res['json']['data'])) return "Expected non-empty data for Space Blaster";
+    if (empty($res['json']['data'])) return "Expected non-empty data for Tetris Effect";
     
     // Verify structure
     $firstPoint = $res['json']['data'][0];
@@ -424,7 +424,7 @@ runTest('Rate Limiting: Exceeding 10 submissions per minute triggers HTTP 429 To
     // Send up to 12 rapid requests with valid API key
     for ($i = 1; $i <= 12; $i++) {
         $res = $client->request('POST', '/api/post-score.php', [
-            'game' => 'Space Blaster',
+            'game' => 'Tetris Effect',
             'player_name' => 'RateLimitTester',
             'score' => 1000 + $i,
         ], ['X-API-Key: hyper-arena-secret-key-2026']);

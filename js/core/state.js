@@ -77,7 +77,7 @@ export function setStoredSidebarCollapsed(collapsed) {
  */
 export function restoreFilterPreferences() {
     try {
-        const savedGame = localStorage.getItem('pref_game');
+        const savedGame = localStorage.getItem('pref_game') || localStorage.getItem('selectedGame');
         const savedLimit = localStorage.getItem('pref_limit');
         const savedPeriod = localStorage.getItem('pref_period');
         const savedSort = localStorage.getItem('pref_sort');
@@ -95,6 +95,7 @@ export function restoreFilterPreferences() {
 export function saveFilterPreferences() {
     try {
         localStorage.setItem('pref_game', state.game);
+        localStorage.setItem('selectedGame', state.game);
         localStorage.setItem('pref_limit', state.limit);
         localStorage.setItem('pref_period', state.period);
         localStorage.setItem('pref_sort', state.sort);

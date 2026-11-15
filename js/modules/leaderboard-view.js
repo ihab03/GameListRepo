@@ -31,9 +31,25 @@ export async function fetchGames() {
  * @param {string[]} games
  */
 export function populateGameSelectors(games) {
+    // Prevent stale localStorage game selection bug
+    if (state.game && state.game !== 'all' && !games.includes(state.game)) {
+        state.game = 'all';
+        saveFilterPreferences();
+    }
+
+    try {
+        const storedSelected = localStorage.getItem('selectedGame');
+        if (storedSelected && storedSelected !== 'all' && !games.includes(storedSelected)) {
+            localStorage.setItem('selectedGame', 'all');
+        }
+        const prefGame = localStorage.getItem('pref_game');
+        if (prefGame && prefGame !== 'all' && !games.includes(prefGame)) {
+            localStorage.setItem('pref_game', 'all');
+        }
+    } catch (e) {}
+
     const gameSelector = document.getElementById('gameSelector');
     if (gameSelector) {
-        const prevVal = gameSelector.value;
         gameSelector.replaceChildren();
 
         const optAll = document.createElement('option');
@@ -48,11 +64,7 @@ export function populateGameSelectors(games) {
             gameSelector.appendChild(opt);
         });
 
-        if (state.game && (state.game === 'all' || games.includes(state.game))) {
-            gameSelector.value = state.game;
-        } else {
-            gameSelector.value = prevVal || 'all';
-        }
+        gameSelector.value = (state.game && games.includes(state.game)) ? state.game : 'all';
     }
 
     const gamesDatalist = document.getElementById('gamesDatalist');
@@ -66,8 +78,10 @@ export function populateGameSelectors(games) {
     }
 
     const formGameInput = document.getElementById('formGameInput');
-    if (formGameInput && !formGameInput.value && games.length > 0) {
-        formGameInput.value = games[0];
+    if (formGameInput) {
+        if (!formGameInput.value || !games.includes(formGameInput.value)) {
+            formGameInput.value = games.length > 0 ? games[0] : 'Tetris Effect';
+        }
     }
 }
 
@@ -268,7 +282,7 @@ export async function handleRankLookup(event, onPlayerClick) {
     rankResult.classList.remove('hidden');
 
     const game = state.game === 'all'
-        ? (formGameInput && formGameInput.value ? formGameInput.value : 'Space Blaster')
+        ? (formGameInput && formGameInput.value ? formGameInput.value : 'Tetris Effect')
         : state.game;
 
     const params = new URLSearchParams({

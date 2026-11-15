@@ -76,17 +76,17 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- Seed Default Studio Games:
 INSERT INTO `games` (`id`, `slug`, `title`, `genre`, `is_active`) VALUES
-(1, 'space-blaster', 'Space Blaster', 'Sci-Fi Arcade', 1),
-(2, 'dungeon-runner', 'Dungeon Runner', 'Action RPG', 1),
-(3, 'drift-king', 'Drift King', 'Racing Simulation', 1),
-(4, 'cyber-strike', 'Cyber Strike', 'Tactical Shooter', 1),
-(5, 'neon-horizon', 'Neon Horizon', 'Retro Platformer', 1);
+(1, 'tetris-effect', 'Tetris Effect', 'Puzzle', 1),
+(2, 'pac-man', 'Pac-Man', 'Arcade', 1),
+(3, 'subway-surfers', 'Subway Surfers', 'Endless Runner', 1),
+(4, 'vampire-survivors', 'Vampire Survivors', 'Roguelike', 1),
+(5, 'trackmania', 'Trackmania', 'Racing', 1);
 
 -- Seed Initial Moderation Audit Trail:
 INSERT INTO `audit_logs` (`admin_id`, `admin_username`, `action`, `target_id`, `details`, `created_at`) VALUES
 (1, 'admin', 'system_init', NULL, 'Initialized Hyper Arena game registry and system configuration', DATE_SUB(NOW(), INTERVAL 5 DAY)),
-(1, 'admin', 'add_game', 4, 'Registered new title: Cyber Strike (Tactical Shooter)', DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(1, 'admin', 'approve_score', 1, 'Approved score submission 9850 for player AcePilot in Space Blaster', DATE_SUB(NOW(), INTERVAL 1 DAY));
+(1, 'admin', 'add_game', 4, 'Registered new title: Vampire Survivors (Roguelike)', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(1, 'admin', 'approve_score', 1, 'Approved score submission 985000 for player AcePilot in Tetris Effect', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- Seed Default Accounts:
 -- Admin: username 'admin', password 'Admin123!'
@@ -95,41 +95,53 @@ INSERT INTO `users` (`id`, `username`, `password_hash`, `role`) VALUES
 (1, 'admin', '$2y$12$ILbm674kghjDmpv.2y.BL.a/Fb.dCL8fay4PjvavnLYIokc7TS.Cq', 'admin'),
 (2, 'player1', '$2y$12$Q1DUeJOQtY5SaaoJhwje1OTp7.A0xHeDKJ3x3rozMisVbWXLsv68m', 'player');
 
--- Seed Approved Scores across 3 games
+-- Seed Approved Scores across real iconic games
 -- Pre-approved so the public leaderboard is immediately active and testable
 INSERT INTO `scores` (`user_id`, `game`, `player_name`, `score`, `status`, `reviewed_by`, `reviewed_at`, `created_at`) VALUES
--- Space Blaster: Older than 1 week (All-Time)
-(2, 'Space Blaster', 'AcePilot', 9850, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 15 DAY)),
-(2, 'Space Blaster', 'NovaStar', 9420, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 20 DAY)),
-(2, 'Space Blaster', 'StarGazer', 5400, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 22 DAY)),
-(2, 'Space Blaster', 'NebulaKid', 4950, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 25 DAY)),
-(2, 'Space Blaster', 'RetroRacer', 4100, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 28 DAY)),
+-- Tetris Effect: Older than 1 week (All-Time)
+(2, 'Tetris Effect', 'AcePilot', 985000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 15 DAY)),
+(2, 'Tetris Effect', 'NovaStar', 942000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 20 DAY)),
+(2, 'Tetris Effect', 'StarGazer', 540000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 22 DAY)),
+(2, 'Tetris Effect', 'NebulaKid', 495000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 25 DAY)),
+(2, 'Tetris Effect', 'RetroRacer', 410000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 28 DAY)),
 
--- Space Blaster: Past 7 days (This Week & All-Time)
-(2, 'Space Blaster', 'CyberKnight', 8910, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(2, 'Space Blaster', 'AstroBoy', 8350, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 'Space Blaster', 'CometChaser', 6200, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(2, 'Space Blaster', 'OrbitMaster', 5900, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+-- Tetris Effect: Past 7 days (This Week & All-Time)
+(2, 'Tetris Effect', 'CyberKnight', 891000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(2, 'Tetris Effect', 'AstroBoy', 835000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(2, 'Tetris Effect', 'CometChaser', 620000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(2, 'Tetris Effect', 'OrbitMaster', 590000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 5 DAY)),
 
--- Space Blaster: Today (Today, This Week & All-Time)
-(2, 'Space Blaster', 'VoidWalker', 7980, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 1 HOUR)),
-(2, 'Space Blaster', 'SolarFlare', 7540, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 HOUR)),
-(2, 'Space Blaster', 'PixelPulse', 6890, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+-- Tetris Effect: Today (Today, This Week & All-Time)
+(2, 'Tetris Effect', 'VoidWalker', 798000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+(2, 'Tetris Effect', 'SolarFlare', 754000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 HOUR)),
+(2, 'Tetris Effect', 'PixelPulse', 689000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
 
--- Dungeon Runner: Distributed across periods
-(2, 'Dungeon Runner', 'ShadowRogue', 15200, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 15 DAY)),
-(2, 'Dungeon Runner', 'MysticMage', 12850, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(2, 'Dungeon Runner', 'IronWarrior', 11400, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(2, 'Dungeon Runner', 'CryptKeeper', 9650, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+-- Pac-Man: Distributed across periods (Classic arcade high scores)
+(2, 'Pac-Man', 'ArcadeGod', 3333360, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 15 DAY)),
+(2, 'Pac-Man', 'GhostHunter', 2450800, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(2, 'Pac-Man', 'WakaMaster', 1890200, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(2, 'Pac-Man', 'BlinkyBane', 1245600, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 HOUR)),
 
--- Drift King: Distributed across periods
-(2, 'Drift King', 'ApexDrifter', 88400, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 20 DAY)),
-(2, 'Drift King', 'TurboBoost', 82100, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 'Drift King', 'RedlineRush', 76900, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(2, 'Drift King', 'NitroGhost', 71300, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+-- Subway Surfers: Distributed across periods (Endless runner millions)
+(2, 'Subway Surfers', 'RailRunner', 12850000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 18 DAY)),
+(2, 'Subway Surfers', 'HoverSurfer', 9620000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(2, 'Subway Surfers', 'CoinMagnet', 7410000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(2, 'Subway Surfers', 'JetpackPro', 5180000, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+
+-- Vampire Survivors: Distributed across periods
+(2, 'Vampire Survivors', 'GarlicKing', 154200, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 12 DAY)),
+(2, 'Vampire Survivors', 'HolyWater', 128900, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(2, 'Vampire Survivors', 'DeathDefier', 98400, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(2, 'Vampire Survivors', 'BiteBack', 76500, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+
+-- Trackmania: Distributed across periods
+(2, 'Trackmania', 'ApexDrifter', 88400, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 20 DAY)),
+(2, 'Trackmania', 'TurboBoost', 82100, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(2, 'Trackmania', 'RedlineRush', 76900, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(2, 'Trackmania', 'TimeAttacker', 71300, 'approved', 1, NOW(), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
 
 -- 4 Seeded Pending Scores for immediate Admin Verification Queue testing
-(2, 'Space Blaster', 'SpeedyNova', 9150, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 10 MINUTE)),
-(2, 'Space Blaster', 'LaserFocus', 8400, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 20 MINUTE)),
-(2, 'Dungeon Runner', 'DarkKnight', 13900, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 30 MINUTE)),
-(2, 'Drift King', 'TokyoDrift', 85000, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 40 MINUTE));
+(2, 'Tetris Effect', 'SpeedyNova', 915000, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 10 MINUTE)),
+(2, 'Pac-Man', 'PelletEater', 1520000, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 20 MINUTE)),
+(2, 'Subway Surfers', 'TrackDodger', 8240000, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 30 MINUTE)),
+(2, 'Trackmania', 'SpeedDemon', 85000, 'pending', NULL, NULL, DATE_SUB(NOW(), INTERVAL 40 MINUTE));
