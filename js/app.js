@@ -32,11 +32,14 @@ export async function loadDashboardStats() {
     const kpiMost = document.getElementById('kpiMostPlayed');
     const navPendingBadge = document.getElementById('navPendingBadge');
 
-    if (kpiTotal) kpiTotal.textContent = Number(stats.total_scores || 0).toLocaleString();
-    if (kpiPlayers) kpiPlayers.textContent = Number(stats.active_players || 0).toLocaleString();
+    const totalCount = Number(stats.total_verified_scores ?? stats.total_scores ?? 0);
+    const playersCount = Number(stats.active_players ?? 0);
+    const pendingCount = Number(stats.pending_scores_count ?? stats.pending_scores ?? 0);
+
+    if (kpiTotal) kpiTotal.textContent = totalCount.toLocaleString();
+    if (kpiPlayers) kpiPlayers.textContent = playersCount.toLocaleString();
     if (kpiMost) kpiMost.textContent = stats.most_played_game || 'None';
 
-    const pendingCount = Number(stats.pending_scores || 0);
     const isAdmin = (state.currentUser || state.user)?.role === 'admin';
 
     if (kpiPending) kpiPending.textContent = String(pendingCount);

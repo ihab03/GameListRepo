@@ -39,10 +39,10 @@ if (!defined('DEFAULT_LIMIT')) {
     define('DEFAULT_LIMIT', 10);
 }
 if (!defined('ALLOWED_LIMITS')) {
-    define('ALLOWED_LIMITS', [10, 15, 25, 50, 100, 'all']);
+    define('ALLOWED_LIMITS', [10, 15, 25, 50, 100, 250, 'all']);
 }
 if (!defined('MAX_EXPORT_LIMIT')) {
-    define('MAX_EXPORT_LIMIT', 500);
+    define('MAX_EXPORT_LIMIT', 2000);
 }
 if (!defined('ALLOWED_PERIODS')) {
     define('ALLOWED_PERIODS', [

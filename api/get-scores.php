@@ -39,9 +39,10 @@ if ($game !== 'all') {
 $rawLimit = $_GET['limit'] ?? '10';
 $limit = validateLimit($rawLimit);
 if ($limit === null) {
+    $allowedList = defined('ALLOWED_LIMITS') ? ALLOWED_LIMITS : [10, 15, 25, 50, 100, 250, 'all'];
     sendJsonResponse(400, [
         'status'  => 'error',
-        'message' => 'Invalid limit specified. Allowed: 10, 15, 25, 50, 100, all.'
+        'message' => 'Invalid limit specified. Allowed: ' . implode(', ', $allowedList) . '.'
     ]);
 }
 

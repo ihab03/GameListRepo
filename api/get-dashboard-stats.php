@@ -50,8 +50,10 @@ try {
         'status' => 'success',
         'stats'  => [
             'total_verified_scores' => $totalVerified,
+            'total_scores'          => $totalVerified,
             'active_players'        => $activePlayers,
             'pending_scores_count'  => $pendingCount,
+            'pending_scores'        => $pendingCount,
             'most_played_game'      => $mostPlayedGame,
         ]
     ];
