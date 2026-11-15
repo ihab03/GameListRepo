@@ -239,6 +239,30 @@ Leaderboard data can be exported in one click:
 
 ## REST API Documentation
 
+### Master API Reference Table
+
+The platform provides 15 structured JSON REST endpoints with strict HTTP status code semantics, prepared SQL statements, and RBAC enforcement:
+
+| Method | Endpoint | Access Level | Description | Key Parameters / Payload |
+|---|---|---|---|---|
+| `POST` | `/api/register.php` | Public | Registers a new user account with bcrypt hashing | `username`, `password` |
+| `POST` | `/api/login.php` | Public | Authenticates credentials and starts secure session | `username`, `password` |
+| `POST` | `/api/logout.php` | Authenticated | Destroys current session and clears auth cookie | None |
+| `GET` | `/api/session.php` | Public / Authenticated | Returns auth status, role, telemetry stats, and recent submissions | None |
+| `GET` | `/api/get-config.php` | Public / Admin | Exposes studio config; reveals secret key & endpoints if Admin | None |
+| `GET` | `/api/get-dashboard-stats.php` | Public / Admin | Returns 4 live telemetry KPIs; includes audit history if Admin | None |
+| `GET` | `/api/get-games.php` | Public | Returns active game titles list and full registry metadata | None |
+| `GET` | `/api/get-scores.php` | Public | Returns filtered, sorted, paginated approved rankings | `game`, `limit`, `period`, `sort`, `search` |
+| `GET` | `/api/get-rank.php` | Public | Looks up a player's best score and calculated rank in a game | `game`, `player_name`, `period` |
+| `GET` | `/api/get-player-profile.php` | Public | Returns deep player profile with per-game windowed ranks | `player_name` |
+| `GET` | `/api/get-chart-data.php` | Public | Returns daily aggregated score telemetry for Canvas charts | `game`, `days` |
+| `POST` | `/api/post-score.php` | Player / Admin / API Key | Submits score (rate limited; auto-approved with valid key) | `game`, `score` (optional: `player_name` if Admin) |
+| `GET` | `/api/admin-pending-scores.php` | Admin Only | Lists moderation queue items with status aggregation counts | `status`, `game` |
+| `POST` | `/api/admin-verify-score.php` | Admin Only | Moderates score status with audit trail recording | `action` (`approve` / `reject` / `approve_all_pending`), `score_id` |
+| `POST` | `/api/admin-manage-games.php` | Admin Only | Registers new titles or toggles active state with audit logging | `action` (`create` / `toggle`), `title`, `game_id` |
+
+---
+
 ### 1. Authentication Endpoints
 
 #### Register User
@@ -335,9 +359,9 @@ Leaderboard data can be exported in one click:
   {
       "status": "success",
       "stats": {
-          "total_verified_scores": 66,
-          "active_players": 65,
-          "pending_scores_count": 0,
+          "total_verified_scores": 1250,
+          "active_players": 1150,
+          "pending_scores_count": 10,
           "most_played_game": "Tetris Effect"
       },
       "audit_logs": [
@@ -373,7 +397,7 @@ Leaderboard data can be exported in one click:
               "slug": "tetris-effect",
               "genre": "Puzzle",
               "is_active": 1,
-              "total_scores": 45
+              "total_scores": 275
           }
       ]
   }
@@ -402,6 +426,26 @@ Leaderboard data can be exported in one click:
               "created_at": "2026-11-10 10:50:41"
           }
       ]
+  }
+  ```
+
+#### Get Player Rank Lookup
+- **URL**: `GET /api/get-rank.php`
+- **Query Parameters**:
+  - `game` *(string, required)*: Specific game title (e.g. `Tetris Effect`).
+  - `player_name` *(string, required)*: Target competitor handle.
+  - `period` *(string, optional, default: `all`)*: `all`, `week`, or `today`.
+- **Response (`200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "found": true,
+      "game": "Tetris Effect",
+      "period": "all",
+      "player_name": "AcePilot",
+      "best_score": 985000,
+      "rank": 3,
+      "attempts": 4
   }
   ```
 
@@ -458,17 +502,30 @@ Leaderboard data can be exported in one click:
 
 ### 4. Admin Moderation & Registry Endpoints
 
-#### Manage Game Registry
-- **URL**: `POST /api/admin-manage-games.php` *(Admin Only)*
-- **Actions**:
-  - Create: `{"action": "create", "title": "Quantum Surge", "description": "Sci-Fi racer"}`
-  - Toggle: `{"action": "toggle", "game_id": 4}`
-- **Response (`201 Created` / `200 OK`)**:
+#### List Pending Scores Queue
+- **URL**: `GET /api/admin-pending-scores.php` *(Admin Only)*
+- **Query Parameters**:
+  - `status` *(string, optional, default: `pending`)*: `pending`, `approved`, or `rejected`.
+  - `game` *(string, optional)*: Filter queue by title or `all`.
+- **Response (`200 OK`)**:
   ```json
   {
       "status": "success",
-      "message": "Game created successfully.",
-      "game": { "id": 6, "slug": "quantum-surge", "title": "Quantum Surge", "is_active": 1 }
+      "filter": { "status": "pending", "game": "all" },
+      "counts": { "pending": 10, "approved": 1250, "rejected": 4 },
+      "scores": [
+          {
+              "id": 1260,
+              "user_id": 2,
+              "game": "Tetris Effect",
+              "player_name": "player1",
+              "score": 85000,
+              "status": "pending",
+              "reviewed_by": null,
+              "reviewed_at": null,
+              "created_at": "2026-11-15 08:30:00"
+          }
+      ]
   }
   ```
 
@@ -484,6 +541,20 @@ Leaderboard data can be exported in one click:
       "message": "Score approved successfully.",
       "score_id": 240,
       "new_status": "approved"
+  }
+  ```
+
+#### Manage Game Registry
+- **URL**: `POST /api/admin-manage-games.php` *(Admin Only)*
+- **Actions**:
+  - Create: `{"action": "create", "title": "Quantum Surge", "description": "Sci-Fi racer"}`
+  - Toggle: `{"action": "toggle", "game_id": 4}`
+- **Response (`201 Created` / `200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "message": "Game created successfully.",
+      "game": { "id": 6, "slug": "quantum-surge", "title": "Quantum Surge", "is_active": 1 }
   }
   ```
 
@@ -594,16 +665,19 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 | Issue / Edge Case | Root Cause / Vulnerability | Solution / Fix Implemented |
 |---|---|---|
-| **Numeric Out of Range** (`score > 2147483647`) | MySQL signed 32-bit `INT` maximum is 2,147,483,647. Values exceeding this crash with SQLSTATE `22003`. | Checked raw scores for digit count and validated against `MAX_SCORE` before SQL execution; caught `22003` as fallback. |
-| **Zero Score Rejection** (`score: 0`) | Loose PHP `empty($score)` evaluates `0` as empty, improperly rejecting valid zero scores. | Replaced loose checks with `!isset($input['score']) \|\| (is_string($input['score']) && trim($input['score']) === '')`. |
-| **Float/Decimal Permissibility** | Decimals (e.g. `12.34`) bypassed loose numeric checks. | Added explicit `is_float()` and `ctype_digit` checks to enforce integer-only scores. |
-| **Whitespace-Only Inputs** | Inputs like `"   "` passed standard string checks. | Enforced `trim()` validation for player handles and titles. |
-| **Oversized String Payloads** | Payloads exceeding 100 characters caused DB truncation errors. | Enforced length validation (`mb_strlen(trim(...)) <= 100`) returning HTTP 400. |
-| **Submission Flooding & DoS** | Malicious users could hammer score inserts. | Implemented IP rate limiter returning HTTP `429` with `Retry-After` when exceeding 10/minute. |
-| **Unapproved Scores on Leaderboard** | Direct inserts could allow vulgar or fraudulent scores into public standings. | Moderation pipeline with `status = 'pending'`, public view restricted strictly to `status = 'approved'`. |
-| **Privilege Escalation** | Direct ID manipulation could let normal users approve scores or create games. | Enforced server-side `requireAdmin()` check returning HTTP 403 Forbidden. |
-| **Admin Secret Key Hidden on Config Tab** | `api/get-config.php` did not start the session before calling `getCurrentUser()`, causing admin checks to evaluate as unauthenticated guest. | Added `startSecureSession()` at the top of `api/get-config.php`, added `Cache-Control: no-store`, and synchronized `fetchStudioConfig()` on login/registration and tab activation. |
-| **XSS Payload Injection** | User handles containing HTML/JS tags could execute if rendered via `innerHTML`. | Strictly used `document.createElement()` and `textContent` across all client scripts. |
+| **Numeric Out of Range** (`score > 2147483647`) | MySQL signed 32-bit `INT` maximum is 2,147,483,647 (`0x7FFFFFFF`). Submissions exceeding this threshold triggered unhandled PDO exceptions with SQLSTATE `22003` ("Numeric value out of range"). | Checked raw score digit length and validated numerical value against `MAX_SCORE` constant before SQL execution; caught PDO SQLSTATE `22003` returning HTTP 400 Bad Request. |
+| **Zero Score Rejection** (`score: 0`) | In PHP, loose `empty("0")` and `empty(0)` evaluate to `true`. When players legitimately achieved or submitted a score of `0` in survival titles, the backend validator rejected it with `"Score is required"`. | Replaced loose `empty()` with strict `!isset($input['score']) \|\| (is_string($input['score']) && trim($input['score']) === '')`, correctly accepting valid `0` and `"0"` integers. |
+| **Float/Decimal Validation Bypass** | Loose numeric validation (`is_numeric("12.34")`) evaluated float strings as valid numbers, allowing fractional numbers into integer database columns and causing truncation inaccuracies. | Enforced strict integer validation via `filter_var($val, FILTER_VALIDATE_INT) !== false` and rejected any value containing decimal points or evaluated as `is_float()`. |
+| **Theme Toggle ID Mismatch & Double-Toggle** | Header markup utilized `id="themeToggleBtn"` while legacy scripts queried `#themeToggle` or attached redundant event listeners during view updates, causing clicks to flip themes twice instantaneously (dark -> light -> dark). | Unified button selector to `#themeToggleBtn` across all HTML and JS files, attached a single idempotent listener in `dom-utils.js`, and synchronized `data-theme` on `<html>` with `localStorage`. |
+| **Admin Secret Key Session Timing** | `api/get-config.php` invoked `getCurrentUser()` before `startSecureSession()` was executed. With no active session, the check evaluated as guest, hiding `admin_config` and displaying "Administrator access required". | Called `startSecureSession()` at the entry point of `api/get-config.php` before reading session data, added `Cache-Control: no-store` headers, and synchronized config fetches on login/registration. |
+| **Stale `localStorage` Game Filter Reset** | When active game titles were updated or replaced in the database, `localStorage` retained obsolete slugs (e.g., deprecated titles), causing the leaderboard to query non-existent games and display empty results indefinitely. | Added runtime validation in `state.js` and `leaderboard-view.js` checking stored game slugs against the active list from `api/get-games.php`, automatically resetting to `'all'` if unrecognized. |
+| **Cross-Game Score Scale Skew** | In cross-game leaderboards (`game=all`), titles with multi-million score loops (e.g. Subway Surfers reaching 18,000,000+) monopolized all top 25 positions, crowding out top scores from precision titles like Pac-Man and Tetris Effect. | Calibrated simulation and seeding tier distributions: 97% of Subway Surfers scores fall between 100k and 2.8M, with only the top 3% reaching 4M–18.5M, allowing Pac-Man (3.3M) and Tetris Effect (2.4M) to contest the podium. |
+| **Whitespace-Only Inputs** | Inputs composed entirely of spaces (e.g., `"   "`) passed standard non-null string checks. | Enforced `trim()` validation for player handles and title strings, ensuring non-empty textual content. |
+| **Oversized String Payloads** | Payloads exceeding 100 characters caused MySQL column truncation errors and layout overflows. | Enforced length validation (`mb_strlen(trim(...)) <= 100`) returning HTTP 400 Bad Request. |
+| **Submission Flooding & DoS** | Malicious clients could hammer score submission endpoints with rapid-fire requests. | Implemented sliding-window rate limiting in `rate_limits` table, returning HTTP `429 Too Many Requests` with `Retry-After: 60` when exceeding 10 requests/minute. |
+| **Unapproved Scores on Leaderboard** | Direct submissions without moderation could display offensive handles or fraudulent scores on public standings. | Architected a two-stage pipeline: submissions enter `status = 'pending'`, and public leaderboard queries filter strictly for `status = 'approved'`. |
+| **Privilege Escalation** | Direct ID manipulation or crafted POST bodies could allow normal users to approve scores or register titles. | Enforced server-side `requireAdmin()` check returning HTTP 403 Forbidden with structured JSON error responses. |
+| **XSS Payload Injection** | User handles containing HTML or JavaScript (e.g. `<script>alert(1)</script>`) could execute if rendered via `innerHTML`. | Strictly used `document.createElement()` and `textContent` across 100% of dynamic client-side rendering code. |
 
 ---
 
