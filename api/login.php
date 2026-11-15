@@ -10,6 +10,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/helpers.php';
 
+startSecureSession();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse(405, [
         'status'  => 'error',

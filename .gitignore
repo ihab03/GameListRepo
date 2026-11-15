@@ -1,15 +1,27 @@
-# Environment and sensitive configuration files
+# Environment & sensitive credentials
 config.php
 .env
 .env.*
 *.env
 
-# IDE and OS files
+# Dependencies & Package Managers
+node_modules/
+vendor/
+
+# IDE & Editor metadata
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System artifacts
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Logs and temporary files
+# Logs & Runtime caches
 *.log
-
+*.tmp
+*.bak
+scratch/
+.system_generated/

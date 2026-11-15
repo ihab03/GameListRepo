@@ -374,7 +374,7 @@ runTest('Secret API Key: Valid key allows submission with pre-approval (HTTP 201
         'game' => 'Space Blaster',
         'player_name' => 'ServerBot_E2E',
         'score' => 12900,
-    ], ['X-API-Key: wolves-secret-key-2026']);
+    ], ['X-API-Key: hyper-arena-secret-key-2026']);
     if ($res['status'] !== 201) return "Expected status 201, got {$res['status']} with body: {$res['body']}";
     if (($res['json']['data']['status'] ?? '') !== 'approved') return "Expected status 'approved'";
     if (($res['json']['data']['player_name'] ?? '') !== 'ServerBot_E2E') return "Expected player_name 'ServerBot_E2E'";
@@ -427,7 +427,7 @@ runTest('Rate Limiting: Exceeding 10 submissions per minute triggers HTTP 429 To
             'game' => 'Space Blaster',
             'player_name' => 'RateLimitTester',
             'score' => 1000 + $i,
-        ], ['X-API-Key: wolves-secret-key-2026']);
+        ], ['X-API-Key: hyper-arena-secret-key-2026']);
 
         if ($res['status'] === 201) {
             $hitCount++;
@@ -452,10 +452,187 @@ runTest('Rate Limiting: Exceeding 10 submissions per minute triggers HTTP 429 To
     return true;
 });
 
+// ========================================================
+// STEP 8: Game Studio Dashboard, Registry & Telemetry Tests
+// ========================================================
+
+$createdTestGameId = null;
+
+// 24. Public Config: GET /api/get-config.php returns public constants without admin secret
+runTest('Studio Config: GET /api/get-config.php (Public) returns dynamic bounds without secrets', function () use ($client) {
+    $client->clearCookies();
+    $res = $client->request('GET', '/api/get-config.php');
+    if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
+    if ($res['json']['status'] !== 'success') return "Expected status='success'";
+    if (!isset($res['json']['config']['app_title'])) return "Missing app_title in config";
+    if (!isset($res['json']['config']['allowed_limits'])) return "Missing allowed_limits in config";
+    if (isset($res['json']['admin_config'])) return "Public request must NOT expose admin_config";
+    return true;
+});
+
+// 25. Admin Config: GET /api/get-config.php with admin session exposes admin_config
+runTest('Studio Config: GET /api/get-config.php (Admin) exposes admin_config and endpoints map', function () use ($client) {
+    // Login as admin
+    $loginRes = $client->request('POST', '/api/login.php', [
+        'username' => 'admin',
+        'password' => 'Admin123!',
+    ]);
+    if ($loginRes['status'] !== 200) return "Admin login failed: {$loginRes['status']}";
+
+    $res = $client->request('GET', '/api/get-config.php');
+    if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
+    if (!isset($res['json']['admin_config']['api_secret_key'])) return "Missing api_secret_key in admin_config";
+    if (!isset($res['json']['admin_config']['endpoints']['scores'])) return "Missing endpoints map in admin_config";
+    return true;
+});
+
+// 26. Dashboard Telemetry: GET /api/get-dashboard-stats.php returns 4 live KPIs
+runTest('Telemetry KPIs: GET /api/get-dashboard-stats.php returns live KPI statistics', function () use ($client) {
+    $res = $client->request('GET', '/api/get-dashboard-stats.php');
+    if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
+    $stats = $res['json']['stats'] ?? [];
+    if (!isset($stats['total_verified_scores'])) return "Missing total_verified_scores KPI";
+    if (!isset($stats['active_players'])) return "Missing active_players KPI";
+    if (!isset($stats['pending_scores_count'])) return "Missing pending_scores_count KPI";
+    if (!isset($stats['most_played_game'])) return "Missing most_played_game KPI";
+    // Since admin is logged in, audit_logs should also be present
+    if (!isset($res['json']['audit_logs'])) return "Expected audit_logs array for admin session";
+    return true;
+});
+
+// 27. Game Registry Security: Non-admin cannot create games
+runTest('Game Registry: Non-admin calling /api/admin-manage-games.php is blocked', function () use ($client) {
+    $client->clearCookies(); // Unauthenticated
+    $res = $client->request('POST', '/api/admin-manage-games.php', [
+        'action' => 'create',
+        'title'  => 'Unauthorized Title',
+    ]);
+    if ($res['status'] !== 401) return "Expected status 401 for unauthenticated, got {$res['status']}";
+
+    // Login as normal player
+    $client->request('POST', '/api/login.php', [
+        'username' => 'player1',
+        'password' => 'Player123!',
+    ]);
+    $res2 = $client->request('POST', '/api/admin-manage-games.php', [
+        'action' => 'create',
+        'title'  => 'Unauthorized Title',
+    ]);
+    if ($res2['status'] !== 403) return "Expected status 403 for player role, got {$res2['status']}";
+    return true;
+});
+
+// 28. Game Registry Creation: Admin creates new game title and logs audit trail
+runTest('Game Registry: Admin creates new game title with audit logging (HTTP 201)', function () use ($client, &$createdTestGameId) {
+    // Re-login as admin
+    $client->request('POST', '/api/login.php', [
+        'username' => 'admin',
+        'password' => 'Admin123!',
+    ]);
+
+    $res = $client->request('POST', '/api/admin-manage-games.php', [
+        'action'      => 'create',
+        'title'       => 'Test Quantum Surge',
+        'description' => 'Futuristic arcade racer for E2E verification',
+    ]);
+
+    if ($res['status'] !== 201) return "Expected status 201, got {$res['status']}: " . json_encode($res['json']);
+    if (!isset($res['json']['game']['id'])) return "Expected created game object with id";
+    $createdTestGameId = (int) $res['json']['game']['id'];
+
+    // Verify it now appears in GET /api/get-games.php
+    $gamesRes = $client->request('GET', '/api/get-games.php');
+    if (!in_array('Test Quantum Surge', $gamesRes['json']['games'] ?? [], true)) {
+        return "Created game 'Test Quantum Surge' not found in active games list";
+    }
+    return true;
+});
+
+// 29. Game Registry Toggle: Admin deactivates game title
+runTest('Game Registry: Admin deactivates game title with audit logging (HTTP 200)', function () use ($client, &$createdTestGameId) {
+    if (!$createdTestGameId) return "No created test game id to toggle";
+
+    $res = $client->request('POST', '/api/admin-manage-games.php', [
+        'action'  => 'toggle',
+        'game_id' => $createdTestGameId,
+    ]);
+
+    if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
+    if ($res['json']['is_active'] != 0) return "Expected game is_active to be 0";
+
+    // Verify it is excluded from public active list
+    $gamesRes = $client->request('GET', '/api/get-games.php');
+    if (in_array('Test Quantum Surge', $gamesRes['json']['games'] ?? [], true)) {
+        return "Deactivated game should NOT appear in active games list";
+    }
+    return true;
+});
+
+// 30. Audit Trail Verification: Audit log contains recent actions
+runTest('Audit Trail: Admin actions are recorded in GET /api/get-dashboard-stats.php', function () use ($client) {
+    $res = $client->request('GET', '/api/get-dashboard-stats.php');
+    if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
+    $logs = $res['json']['audit_logs'] ?? [];
+    if (empty($logs)) return "Expected non-empty audit logs";
+
+    $actions = array_column($logs, 'action');
+    if (!in_array('add_game', $actions, true)) return "Expected 'add_game' in audit logs";
+    if (!in_array('toggle_game', $actions, true)) return "Expected 'toggle_game' in audit logs";
+    return true;
+});
+
+// 31. Player Profile API: Validation of missing player_name
+runTest('Player Profile API: Missing player_name returns HTTP 400', function () use ($client) {
+    $res = $client->request('GET', '/api/get-player-profile.php');
+    if ($res['status'] !== 400) return "Expected status 400, got {$res['status']}";
+    return true;
+});
+
+// 32. Player Profile API: Non-existent player returns HTTP 404
+runTest('Player Profile API: Non-existent player returns HTTP 404', function () use ($client) {
+    $res = $client->request('GET', '/api/get-player-profile.php?player_name=GhostPlayer_XYZ_999');
+    if ($res['status'] !== 404) return "Expected status 404, got {$res['status']}";
+    return true;
+});
+
+// 33. Player Profile API: Existing player returns summary, ranks, and recent submissions
+runTest('Player Profile API: Existing player returns complete standings and window ranks', function () use ($client) {
+    // Find an existing approved player from leaderboard
+    $lbRes = $client->request('GET', '/api/get-scores.php?game=all&limit=10');
+    $firstPlayer = $lbRes['json']['scores'][0]['player_name'] ?? null;
+    if (!$firstPlayer) return "Could not find any existing player on leaderboard";
+
+    $res = $client->request('GET', '/api/get-player-profile.php?player_name=' . urlencode($firstPlayer));
+    if ($res['status'] !== 200) return "Expected status 200, got {$res['status']}";
+    if ($res['json']['player_name'] !== $firstPlayer) return "Expected player_name='{$firstPlayer}'";
+    if (!isset($res['json']['summary']['total_approved_submissions'])) return "Missing summary.total_approved_submissions";
+    if (!isset($res['json']['summary']['highest_score_overall'])) return "Missing summary.highest_score_overall";
+    if (!isset($res['json']['games']) || !is_array($res['json']['games'])) return "Missing games array";
+    if (!empty($res['json']['games'])) {
+        $firstGame = $res['json']['games'][0];
+        if (!isset($firstGame['best_score']) || !isset($firstGame['rank'])) {
+            return "Missing best_score or rank in game standing";
+        }
+    }
+    return true;
+});
+
 // Database cleanup
 echo "\nCleaning up test artifacts from database...\n";
 require_once __DIR__ . '/db.php';
 $pdo = getDbConnection();
+
+// Clean up created test game
+if ($createdTestGameId) {
+    $stmt = $pdo->prepare("DELETE FROM games WHERE id = :id");
+    $stmt->execute([':id' => $createdTestGameId]);
+    echo "Deleted test game ID {$createdTestGameId}.\n";
+}
+
+// Clean up test audit logs
+$stmt = $pdo->prepare("DELETE FROM audit_logs WHERE details LIKE '%Test Quantum Surge%'");
+$stmt->execute();
+echo "Cleaned up test audit logs.\n";
 
 // Delete test score from user
 if ($createdScoreId) {

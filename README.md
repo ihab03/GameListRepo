@@ -1,6 +1,6 @@
-# Game Leaderboard Service (Option A)
+# Hyper Arena - Game Leaderboard & Telemetry Platform
 
-A high-performance, modular web application, admin moderation platform, and REST API for tracking and displaying top player scores across multiple games. Built with vanilla HTML5, modern CSS3, vanilla JavaScript (ES6+ `async`/`await`), PHP 8+, and MySQL/MariaDB (optimized for XAMPP and standalone PHP/MySQL environments).
+A high-performance, modular Game Studio Dashboard, admin moderation suite, and REST API for tracking verified player rankings, match analytics, and live telemetry across multiple titles. Built with vanilla HTML5, modern CSS3 Glassmorphism, vanilla JavaScript (ES6+ `async`/`await`), PHP 8+, and MySQL 8.0+ (optimized for standalone environments and XAMPP).
 
 ---
 
@@ -9,22 +9,24 @@ A high-performance, modular web application, admin moderation platform, and REST
 - [Requirements](#requirements)
 - [Default Demo Credentials & Roles](#default-demo-credentials--roles)
 - [Step-by-Step Setup & Installation](#step-by-step-setup--installation)
+- [Step 8 Studio Dashboard Architecture](#step-8-studio-dashboard-architecture)
+  - [Collapsible Sidebar & Windowed Tabs Layout](#collapsible-sidebar--windowed-tabs-layout)
+  - [Zero Hardcoded Values & Dynamic Configuration](#zero-hardcoded-values--dynamic-configuration)
+  - [Live Telemetry KPI Cards](#live-telemetry-kpi-cards)
+  - [Dynamic Game Registry](#dynamic-game-registry)
+  - [Immutable Studio Audit Trail](#immutable-studio-audit-trail)
+  - [Player Mini-Profile Modal (Window Functions)](#player-mini-profile-modal-window-functions)
+  - [One-Click Data Export (CSV & JSON)](#one-click-data-export-csv--json)
 - [REST API Documentation](#rest-api-documentation)
-  - [Authentication Endpoints](#1-authentication-endpoints)
-  - [Public & Player Endpoints](#2-public--player-endpoints)
-  - [Admin Moderation Endpoints](#3-admin-moderation-endpoints)
-  - [Analytics & Chart API](#4-analytics--chart-api)
-- [Bonus & Polish Features (Step 7)](#bonus--polish-features-step-7)
-  - [Interactive Canvas Scores-Over-Time Chart](#interactive-canvas-scores-over-time-chart)
-  - [Secret API Key Authorization (`X-API-Key`)](#secret-api-key-authorization-x-api-key)
-  - [IP & Session Submission Rate Limiting](#ip--session-submission-rate-limiting)
-  - [Dark Mode & State Persistence](#dark-mode--state-persistence)
-- [Platform Features & Filtration](#platform-features--filtration)
-- [Moderation Workflow & Score Verification](#moderation-workflow--score-verification)
-- [Challenge Features (Option A)](#challenge-features-option-a)
+  - [1. Authentication Endpoints](#1-authentication-endpoints)
+  - [2. Configuration & Telemetry Endpoints](#2-configuration--telemetry-endpoints)
+  - [3. Public & Player Endpoints](#3-public--player-endpoints)
+  - [4. Admin Moderation & Registry Endpoints](#4-admin-moderation--registry-endpoints)
+  - [5. Analytics & Chart API](#5-analytics--chart-api)
+- [Database Schema & Architecture](#database-schema--architecture)
 - [Security & Performance Engineering](#security--performance-engineering)
 - [Bug List & Verified Fixes](#bug-list--verified-fixes)
-- [Automated Testing Suite](#automated-testing-suite)
+- [Automated Testing Suite (36 Tests)](#automated-testing-suite-36-tests)
 - [Client UI & Simulator Pages](#client-ui--simulator-pages)
 
 ---
@@ -36,32 +38,55 @@ The project strictly separates presentation, client controllers, business logic,
 ```text
 .
 ├── .gitignore                   # Excludes config.php, environment files, IDE & OS artifacts
-├── config-example.php           # Template database & API key configuration for handover
-├── config.php                   # Local environment credentials (excluded from version control)
+├── config-example.php           # Template database & studio configuration for handover
+├── config.php                   # Local environment credentials & bounds (git-ignored)
 ├── db.php                       # Reusable singleton PDO database connection layer
-├── schema.sql                   # Database definition, tables (users, scores, rate_limits), indexes & seeds
-├── index.html                   # Main leaderboard application, filters, canvas chart & auth modal
+├── schema.sql                   # Database definition (5 tables, composite indexes & seed data)
+├── index.html                   # Game Studio Dashboard with collapsible sidebar & windowed tabs
 ├── test-simulator.html          # High-volume score generator & edge-case test battery
-├── test-e2e.php                 # Automated CLI end-to-end verification test suite (26 tests)
+├── test-e2e.php                 # Automated CLI end-to-end verification suite (36 tests)
 ├── css/
-│   └── style.css                # Responsive styles, theme variables (light/dark), rank badges & cards
+│   ├── variables-theme.css      # CSS variables, dark/light theme tokens, and typography
+│   ├── layout-shell.css         # App layout, collapsible sidebar, telemetry KPIs, window panels
+│   ├── components-glass.css     # Glassmorphic cards, tables, badges, modals, and buttons
+│   └── style.css                # Master stylesheet aggregating modular CSS via @import
 ├── js/
-│   ├── app.js                   # Main client controller (auth, filters, fetch, XSS-safe DOM)
-│   ├── chart.js                 # Vanilla Canvas 2D visualization controller (zero dependencies)
-│   └── test-simulator.js        # High-volume simulation & edge-case validation controller
+│   ├── app.js                   # Master application entrypoint (< 150 lines, ES modules)
+│   ├── test-simulator.js        # High-volume simulation & edge-case validation controller
+│   ├── core/
+│   │   ├── state.js             # Reactive application state & localStorage persistence
+│   │   ├── api-client.js        # Unified HTTP fetch wrappers with error handling
+│   │   └── dom-utils.js         # XSS-immune DOM helpers, SVG icons, formatters, and navigation
+│   └── modules/
+│       ├── auth-account.js      # Session management, account modal, and authentication forms
+│       ├── admin-panel.js       # Moderation queue, game registry, audit trail, and studio config
+│       ├── leaderboard-view.js  # Leaderboard table, filtration, rank lookup, and CSV/JSON export
+│       ├── score-submit.js      # Score submission engine and client-side boundary validation
+│       ├── player-modal.js      # Player mini-profile modal and telemetry inspector
+│       └── chart-view.js        # HTML5 Canvas 2D score analytics and high-DPI line chart
 └── api/
-    ├── helpers.php              # Centralized JSON responses, session auth, rate limiter & validators
-    ├── register.php             # POST: Registers a new user account with bcrypt password hashing
+    ├── helpers.php              # Aggregator loader linking modular backend core files
+    ├── core/
+    │   ├── response.php         # JSON response helpers, HTTP method validation, input parsers
+    │   ├── session-auth.php     # Session lifecycle, RBAC checks, and API key validation
+    │   ├── validators.php       # Parameter sanitizers and score/game/period validators
+    │   ├── rate-limiter.php     # IP/Session database-backed rate limiter
+    │   └── audit-logger.php     # Structured administrative audit logging
+    ├── register.php             # POST: Registers user account with bcrypt password hashing
     ├── login.php                # POST: Authenticates user credentials and starts secure session
     ├── logout.php               # POST: Destroys session and clears auth cookies
-    ├── session.php              # GET: Returns current user authentication state and role
-    ├── get-games.php            # GET: Returns distinct alphabetical list of active games
+    ├── session.php              # GET: Authentication state, role, personal stats & recent telemetry
+    ├── get-config.php           # GET: Exposes dynamic studio configuration & allowed limits
+    ├── get-dashboard-stats.php  # GET: Returns live telemetry KPIs and moderation audit history
+    ├── get-games.php            # GET: Distinct active game titles & registry metadata
     ├── get-scores.php           # GET: Filtered public scores (limit, period, search, sort, game)
-    ├── get-rank.php             # GET: Returns a specific player's highest score and leaderboard rank
-    ├── get-chart-data.php       # GET: Returns daily aggregated stats for canvas trends visualization
+    ├── get-rank.php             # GET: Specific player's highest score and rank in a game
+    ├── get-player-profile.php   # GET: Player profile, personal bests, and windowed ranks
+    ├── get-chart-data.php       # GET: Daily aggregated stats for canvas trends visualization
     ├── post-score.php           # POST: Submits score (session or X-API-Key required; rate limited)
     ├── admin-pending-scores.php # GET: Admin-only moderation queue with summary statistics
-    └── admin-verify-score.php   # POST: Admin-only score moderation (approve/reject single or bulk)
+    ├── admin-verify-score.php   # POST: Admin-only score moderation with audit logging
+    └── admin-manage-games.php   # POST: Admin-only title registration and activation toggles
 ```
 
 ---
@@ -80,18 +105,17 @@ The system comes pre-seeded with two accounts representing the supported user ro
 
 | Role | Username | Password | Privileges |
 |---|---|---|---|
-| **Admin** | `admin` | `Admin123!` | Full access: View public leaderboards, submit scores, review pending submissions in the moderation queue, approve/reject single scores, or execute bulk approvals. |
-| **Player** | `player1` | `Player123!` | Standard access: View public leaderboards, filter and search scores, look up personal ranking, and submit scores (automatically marked `pending` for admin review). |
+| **Admin** | `admin` | `Admin123!` | Full studio administrative access: Review & moderate submitted scores, manage registered titles in the Game Registry, inspect the immutable Audit Trail, reveal direct engine API keys, and submit pre-approved scores with custom handle overrides. |
+| **Player** | `player1` | `Player123!` | Standard competitor access: View public leaderboards, filter and search scores, look up personal ranking, open player profile modals, export rankings, and submit scores (automatically routed to the moderation queue). |
 
 > [!TIP]
-> The login modal on `index.html` includes one-click "Fill Demo" chips to instantly populate either credential set.
+> The workspace header includes one-click "Demo Credentials" chips to instantly sign in as either role.
 
 ---
 
 ## Step-by-Step Setup & Installation
 
 ### Step 1: Open the Project Directory
-Navigate to the project root directory:
 ```bash
 cd intern
 ```
@@ -106,18 +130,28 @@ Copy-Item config-example.php config.php
 cp config-example.php config.php
 ```
 
-Verify your local database settings in `config.php`. The default configuration is tailored for XAMPP:
+Verify your local database settings in `config.php`:
 ```php
 define('DB_HOST', '127.0.0.1');
 define('DB_NAME', 'game_leaderboard');
 define('DB_USER', 'root');
 define('DB_PASS', '');            // Empty string for default XAMPP, or your MySQL root password
 define('DB_CHARSET', 'utf8mb4');
-define('API_SECRET_KEY', 'wolves-secret-key-2026');
+define('API_SECRET_KEY', 'hyper-arena-secret-key-2026');
+
+// Dynamic Application Bounds
+define('APP_TITLE', 'Hyper Arena');
+define('MIN_SCORE', 0);
+define('MAX_SCORE', 2147483647);
+define('DEFAULT_LIMIT', 10);
+define('ALLOWED_LIMITS', [10, 15, 25, 50, 100, 'all']);
+define('MAX_EXPORT_LIMIT', 500);
+define('RATE_LIMIT_MAX_ATTEMPTS', 10);
+define('RATE_LIMIT_WINDOW_SECONDS', 60);
 ```
 
 ### Step 3: Import Database Schema & Seed Data
-Execute `schema.sql` to initialize the database, tables (`users`, `scores`, `rate_limits`), composite indexes, and demo seed data:
+Execute `schema.sql` to initialize the database, tables (`users`, `scores`, `rate_limits`, `games`, `audit_logs`), composite indexes, and demo seed data:
 
 **Default XAMPP (blank password):**
 ```bash
@@ -132,12 +166,11 @@ mysql -u root -p < schema.sql
 ### Step 4: Run the Web Server
 
 #### Option A: PHP Built-in Server (Recommended for Fast Local Testing)
-Run the following in the project root:
 ```bash
 php -S 127.0.0.1:8000
 ```
 Open your browser and navigate to:
-- Main Platform: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- Studio Dashboard: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 - 100 Random Scores Simulator: [http://127.0.0.1:8000/test-simulator.html](http://127.0.0.1:8000/test-simulator.html)
 
 #### Option B: XAMPP Apache
@@ -147,253 +180,331 @@ Open your browser and navigate to:
 
 ---
 
-## REST API Documentation
+## Step 8 Studio Dashboard Architecture
 
-All API endpoints strictly return standard JSON with UTF-8 encoding and appropriate HTTP status codes.
+### Collapsible Sidebar & Windowed Tabs Layout
+The application features a responsive sidebar and modular windowed panels:
+- **Expanded Sidebar (260px)**: Displays studio crest, dynamic branding, section labels, and tab badges.
+- **Collapsed Sidebar (72px Rail)**: Compact monogram rail for desktop multitasking; state persists in `localStorage`.
+- **Clean Geometric SVG & Monogram Typographic Rail**: Zero emojis across the entire UI. Navigation items feature crisp geometric inline SVG icons and 2-letter typographic monogram badges (`LB`, `AN`, `SR`, `MQ`, `GR`, `AT`, `CF`) visible on both expanded and collapsed rails.
+- **Anchored User Profile Pod (`#sidebarUserPod`)**: Fixed at the bottom of the sidebar (`margin-top: auto`). Displays user initials monogram badge, username, and role; clicking opens the Full-Screen Account Screen.
+- **Mobile Off-Canvas Drawer**: On viewports `< 960px`, the sidebar becomes a slide-over drawer toggled via clean menu text with a frosted backdrop overlay.
+- **7 Dedicated Workspace Panels**:
+  1. `Leaderboard`: Filterable standings, metallic podium badges, and export options.
+  2. `Analytics`: Interactive vanilla HTML5 Canvas performance chart.
+  3. `Submit & Rank`: Dual-card layout for score submissions and personal rank lookups.
+  4. `Moderation Queue` *(Admin)*: Pending score approvals, rejections, and bulk operations.
+  5. `Game Registry` *(Admin)*: Dynamic title creation and visibility toggle management.
+  6. `Audit Trail` *(Admin)*: Immutable chronological history of administrative actions.
+  7. `Studio API & Config`: Live server constants, masked engine key with Reveal/Copy, and endpoint contracts.
 
-### 1. Authentication Endpoints
+### Full-Screen Account & Authentication View (Option A)
+A dedicated, full-screen frosted glass overlay (`#fullScreenAccountView`) accessible via the bottom sidebar user pod, submit screen auth prompts, or `Esc` key navigation:
+- **State A (Unauthenticated)**: Centered glass card with mode switcher (`Sign In` | `Create Account`), demo quick-fill chips, and real-time feedback.
+- **State B (Authenticated)**: Full-page Competitor Dashboard featuring:
+  - **Profile Banner**: Initials monogram avatar, username, role badge, public standing shortcut, and exclusive **Log Out** button (`#logoutBtn`).
+  - **Personal Telemetry Strip**: 4 mini stat cards showing Approved Scores, Pending Review, Rejected Scores, and Personal Best Score.
+  - **My Recent Submissions Table**: Displays the player's last 15 recorded submissions with game title, score, moderation status, and date.
 
-#### Register Account
-- **URL**: `/api/register.php`
-- **Method**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-  ```json
-  {
-      "username": "SpeedRunner99",
-      "password": "Password123!"
-  }
-  ```
-- **Responses**:
-  - `201 Created`: User created and session started.
-  - `400 Bad Request`: Validation failure (username 3–50 alphanumeric/underscore, password min 6 chars).
-  - `409 Conflict`: Username already taken.
+### Zero Hardcoded Values & Dynamic Configuration
+All limits, score ranges, rate-limit thresholds, and studio metadata originate in `config.php` and are exposed to the client via `GET /api/get-config.php`. The frontend dynamically renders:
+- Studio titles in header and `<title>`.
+- Dropdown options (`10`, `15`, `25`, `50`, `100`, `All Records`).
+- Timeframe options (`all`, `week`, `today`).
+- Numeric validation attributes (`min="0" max="2147483647"`).
 
-#### Login
-- **URL**: `/api/login.php`
-- **Method**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-  ```json
-  {
-      "username": "player1",
-      "password": "Player123!"
-  }
-  ```
-- **Responses**:
-  - `200 OK`: Credentials verified, returns `{ status: "success", user: { id, username, role } }`.
-  - `401 Unauthorized`: Invalid username or password.
+### Live Telemetry KPI Cards
+At the top of the workspace, 4 live telemetry cards update in real time:
+1. **Total Verified Scores**: Count of all approved scores in the database.
+2. **Active Competitors**: Count of unique players with verified records.
+3. **Pending Moderation**: High-priority alert card highlighting scores awaiting admin review.
+4. **Most Played Title**: Top title by submission volume.
 
-#### Logout
-- **URL**: `/api/logout.php`
-- **Method**: `POST`
-- **Responses**:
-  - `200 OK`: Destroys session and unsets session cookie.
+### Dynamic Game Registry
+Administrators can register new game titles directly through the dashboard via `POST /api/admin-manage-games.php` (action: `create`). Titles can be deactivated/activated at any time (action: `toggle`). Active titles dynamically populate all filter dropdowns and datalists.
 
-#### Session Status
-- **URL**: `/api/session.php`
-- **Method**: `GET`
-- **Responses**:
-  - `200 OK`:
-    ```json
-    {
-        "status": "success",
-        "authenticated": true,
-        "user": {
-            "id": 2,
-            "username": "player1",
-            "role": "player"
-        }
-    }
-    ```
+### Immutable Studio Audit Trail
+Every moderation decision (approval, rejection, bulk action) and title registry modification writes an audit record into the `audit_logs` table via `logAdminAction()`. Administrators can inspect the audit trail with timestamps, administrator handles, and detailed change summaries.
+
+### Player Mini-Profile Modal (Window Functions)
+Clicking any player handle opens an interactive modal querying `GET /api/get-player-profile.php`. Standings and ranks across all games are computed in a single prepared statement using MySQL 8.0 window functions (`DENSE_RANK() OVER (PARTITION BY game ORDER BY MAX(score) DESC)`), strictly avoiding N+1 queries in loops.
+
+### One-Click Data Export (CSV & JSON)
+Leaderboard data can be exported in one click:
+- **Export CSV**: Generates RFC 4180-compliant CSV with escaped commas and quotation marks.
+- **Export JSON**: Generates structured, pretty-printed JSON.
+- Triggered client-side using `Blob` and dynamic anchor downloads (`URL.createObjectURL()`).
 
 ---
 
-### 2. Public & Player Endpoints
+## REST API Documentation
 
-#### Get Games List
-- **URL**: `/api/get-games.php`
-- **Method**: `GET`
-- **Description**: Returns an alphabetical list of all distinct games with approved scores recorded.
-- **Response (`200 OK`)**:
-  ```json
-  {
-      "status": "success",
-      "games": ["Drift King", "Dungeon Runner", "Space Blaster"]
-  }
-  ```
+### 1. Authentication Endpoints
 
-#### Get Filtered Leaderboard Scores
-- **URL**: `/api/get-scores.php`
-- **Method**: `GET`
-- **Query Parameters**:
-  - `game` *(string, optional, default: `all`)*: Target game title or `all` for cross-game view.
-  - `limit` *(string/int, optional, default: `10`)*: Number of rows: `10`, `15`, `25`, `50`, or `all`.
-  - `period` *(string, optional, default: `all`)*: Timeframe: `all`, `week`, or `today`.
-  - `sort` *(string, optional, default: `score_desc`)*: Sort order: `score_desc`, `score_asc`, or `newest`.
-  - `search` *(string, optional)*: Case-insensitive substring match for player name.
-- **Description**: Retrieves approved leaderboard entries satisfying all active filters.
-- **Response (`200 OK`)**:
-  ```json
-  {
-      "status": "success",
-      "game": "Space Blaster",
-      "period": "all",
-      "limit": "15",
-      "sort": "score_desc",
-      "search": null,
-      "scores": [
-          {
-              "id": 1,
-              "game": "Space Blaster",
-              "player_name": "AcePilot",
-              "score": 9850,
-              "created_at": "2026-11-10 09:40:06"
-          }
-      ]
-  }
-  ```
-
-#### Player Rank Lookup
-- **URL**: `/api/get-rank.php`
-- **Method**: `GET`
-- **Query Parameters**:
-  - `game` *(string, required)*: Game title.
-  - `player_name` *(string, required)*: Player username.
-  - `period` *(string, optional, default: `all`)*: `all`, `week`, or `today`.
-- **Response (`200 OK`)**:
-  ```json
-  {
-      "status": "success",
-      "found": true,
-      "game": "Space Blaster",
-      "period": "all",
-      "player_name": "AcePilot",
-      "best_score": 9850,
-      "rank": 1,
-      "attempts": 1
-  }
-  ```
-
-#### Submit Score
-- **URL**: `/api/post-score.php`
-- **Method**: `POST`
-- **Headers**:
-  - `Content-Type: application/json`
-  - `X-API-Key: wolves-secret-key-2026` *(optional: direct server key)*
-- **Body Payload**:
-  ```json
-  {
-      "game": "Space Blaster",
-      "player_name": "SpeedRunner",
-      "score": 10500
-  }
-  ```
-- **Requirements**: User must either be authenticated via session OR provide a valid `X-API-Key` header (or `api_key` payload field).
-- **Rate Limit**: Maximum 10 submissions per minute per IP. Exceeding returns `429 Too Many Requests`.
+#### Register User
+- **URL**: `POST /api/register.php`
+- **Body**: `{"username": "player2", "password": "Password123!"}`
 - **Response (`201 Created`)**:
   ```json
   {
       "status": "success",
-      "message": "Score submitted successfully.",
-      "data": {
-          "id": 25,
-          "game": "Space Blaster",
-          "player_name": "SpeedRunner",
-          "score": 10500,
-          "status": "approved"
+      "message": "User registered successfully.",
+      "user": { "id": 3, "username": "player2", "role": "player" }
+  }
+  ```
+
+#### Login User
+- **URL**: `POST /api/login.php`
+- **Body**: `{"username": "admin", "password": "Admin123!"}`
+- **Response (`200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "message": "Login successful.",
+      "user": { "id": 1, "username": "admin", "role": "admin" }
+  }
+  ```
+
+#### Check Session & Personal Telemetry
+- **URL**: `GET /api/session.php`
+- **Description**: Returns current authentication status. When authenticated, includes personal telemetry stats (`approved_count`, `pending_count`, `rejected_count`, `best_score`) and the last 15 `recent_submissions`.
+- **Response (`200 OK - Authenticated`)**:
+  ```json
+  {
+      "status": "success",
+      "authenticated": true,
+      "user": {
+          "id": 1,
+          "username": "admin",
+          "role": "admin",
+          "stats": {
+              "approved_count": 10,
+              "pending_count": 0,
+              "rejected_count": 1,
+              "best_score": 469877
+          },
+          "recent_submissions": [
+              {
+                  "id": 214,
+                  "game": "Space Blaster",
+                  "score": 5757,
+                  "status": "approved",
+                  "created_at": "2026-11-10 10:50:42"
+              }
+          ]
+      },
+      "stats": { ... },
+      "recent_submissions": [ ... ]
+  }
+  ```
+
+#### Logout User
+- **URL**: `POST /api/logout.php`
+- **Response (`200 OK`)**: `{"status": "success", "message": "Logged out successfully."}`
+
+---
+
+### 2. Configuration & Telemetry Endpoints
+
+#### Get Studio Configuration
+- **URL**: `GET /api/get-config.php`
+- **Description**: Returns public configuration constants. If authenticated as admin, includes `admin_config` with the secret API key and full endpoints map.
+- **Response (`200 OK - Public`)**:
+  ```json
+  {
+      "status": "success",
+      "config": {
+          "app_title": "Hyper Arena",
+          "min_score": 0,
+          "max_score": 2147483647,
+          "default_limit": 10,
+          "allowed_limits": [10, 15, 25, 50, 100, "all"],
+          "max_export_limit": 500,
+          "allowed_periods": { "all": "All-Time", "week": "This Week", "today": "Today" },
+          "rate_limit_max": 10,
+          "rate_limit_window": 60
       }
   }
   ```
 
----
-
-### 3. Admin Moderation Endpoints
-
-#### View Moderation Queue
-- **URL**: `/api/admin-pending-scores.php`
-- **Method**: `GET`
-- **Requirements**: Authenticated user with `role === 'admin'` (`403 Forbidden` for players).
-- **Query Parameters**:
-  - `status` *(string, optional, default: `pending`)*: Filter by `pending`, `approved`, `rejected`, or `all`.
-  - `game` *(string, optional)*: Filter queue by specific game.
+#### Get Studio Telemetry KPIs & Audit History
+- **URL**: `GET /api/get-dashboard-stats.php`
+- **Description**: Returns 4 core KPI statistics. If authenticated as admin, also includes the recent 50 entries from `audit_logs`.
 - **Response (`200 OK`)**:
   ```json
   {
       "status": "success",
-      "summary": {
-          "pending": 4,
-          "approved": 20,
-          "rejected": 0,
-          "total": 24
+      "stats": {
+          "total_verified_scores": 66,
+          "active_players": 65,
+          "pending_scores_count": 0,
+          "most_played_game": "Space Blaster"
       },
-      "scores": [
+      "audit_logs": [
           {
-              "id": 21,
-              "user_id": 2,
-              "submitter_username": "player1",
-              "player_name": "NovaStrike",
-              "game": "Space Blaster",
-              "score": 12500,
-              "status": "pending",
-              "created_at": "2026-11-10 09:20:00"
+              "id": 5,
+              "admin_id": 1,
+              "admin_username": "admin",
+              "action": "add_game",
+              "target_id": 6,
+              "details": "Registered new studio game 'Galactic Odyssey'",
+              "created_at": "2026-11-14 04:30:00"
           }
       ]
   }
   ```
 
-#### Verify / Moderate Score
-- **URL**: `/api/admin-verify-score.php`
-- **Method**: `POST`
-- **Requirements**: Authenticated user with `role === 'admin'`.
-- **Body Options**:
-  - **Single Action**:
-    ```json
-    { "score_id": 21, "action": "approve" }
-    ```
-    *(Allowed actions: `approve`, `reject`)*
-  - **Bulk Action**:
-    ```json
-    { "action": "approve_all_pending", "game": "Space Blaster" }
-    ```
-    *(Allowed actions: `approve_all_pending`, `reject_all_pending`)*
+---
+
+### 3. Public & Player Endpoints
+
+#### Get Games List
+- **URL**: `GET /api/get-games.php`
+- **Description**: Returns an array of active game title strings (`games`) and rich metadata objects (`data`).
 - **Response (`200 OK`)**:
   ```json
   {
       "status": "success",
-      "message": "Score approved successfully."
+      "games": ["Cyber Strike", "Drift King", "Dungeon Runner", "Space Blaster"],
+      "data": [
+          {
+              "id": 1,
+              "title": "Space Blaster",
+              "slug": "space-blaster",
+              "genre": "Arcade Shooter",
+              "is_active": 1,
+              "total_scores": 45
+          }
+      ]
+  }
+  ```
+
+#### Get Filtered Leaderboard Scores
+- **URL**: `GET /api/get-scores.php`
+- **Query Parameters**:
+  - `game` *(string, default: `all`)*: Target title or `all`.
+  - `limit` *(string/int, default: `10`)*: `10`, `15`, `25`, `50`, `100`, or `all`.
+  - `period` *(string, default: `all`)*: `all`, `week`, or `today`.
+  - `sort` *(string, default: `score_desc`)*: `score_desc`, `score_asc`, or `newest`.
+  - `search` *(string, optional)*: Substring match for player handle.
+- **Response (`200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "filters": { "game": "Space Blaster", "limit": "10", "period": "all", "sort": "score_desc", "search": "" },
+      "total_returned": 1,
+      "scores": [
+          {
+              "id": 212,
+              "game": "Space Blaster",
+              "player_name": "ShadowFox455",
+              "score": 469877,
+              "created_at": "2026-11-10 10:50:41"
+          }
+      ]
+  }
+  ```
+
+#### Get Player Deep Profile & Standings
+- **URL**: `GET /api/get-player-profile.php?player_name=AcePilot`
+- **Description**: Computes overall summary, per-game personal bests with ranks via window functions, and recent submissions.
+- **Response (`200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "player_name": "AcePilot",
+      "summary": {
+          "total_approved_submissions": 5,
+          "highest_score_overall": 98500,
+          "first_seen": "2026-10-15 08:00:00",
+          "last_seen": "2026-11-12 14:20:00"
+      },
+      "games": [
+          {
+              "game": "Space Blaster",
+              "best_score": 98500,
+              "submissions_count": 3,
+              "rank": 1
+          }
+      ],
+      "recent_scores": [
+          {
+              "id": 142,
+              "game": "Space Blaster",
+              "score": 98500,
+              "created_at": "2026-11-12 14:20:00"
+          }
+      ]
+  }
+  ```
+
+#### Submit Score
+- **URL**: `POST /api/post-score.php`
+- **Headers**:
+  - `Content-Type: application/json`
+  - `X-API-Key: hyper-arena-secret-key-2026` *(optional for game engines)*
+- **Body**: `{"game": "Space Blaster", "score": 12500}`
+- **Rate Limit**: 10 requests / 60 seconds per IP.
+- **Response (`201 Created`)**:
+  ```json
+  {
+      "status": "success",
+      "message": "Score submitted successfully. Pending admin approval.",
+      "data": { "id": 240, "game": "Space Blaster", "player_name": "player1", "score": 12500, "status": "pending" }
   }
   ```
 
 ---
 
-### 4. Analytics & Chart API
+### 4. Admin Moderation & Registry Endpoints
 
-#### Scores Over Time Aggregation
-- **URL**: `/api/get-chart-data.php`
-- **Method**: `GET`
-- **Query Parameters**:
-  - `game` *(string, required)*: Game title or `all` for cross-game analytics.
-  - `days` *(int, optional, default: `30`)*: Aggregation timeframe (`7`, `30`, or `90`).
-- **Description**: Returns daily chronological snapshots aggregating the highest score, total submissions, and average score strictly across approved entries.
+#### Manage Game Registry
+- **URL**: `POST /api/admin-manage-games.php` *(Admin Only)*
+- **Actions**:
+  - Create: `{"action": "create", "title": "Quantum Surge", "description": "Sci-Fi racer"}`
+  - Toggle: `{"action": "toggle", "game_id": 4}`
+- **Response (`201 Created` / `200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "message": "Game created successfully.",
+      "game": { "id": 6, "slug": "quantum-surge", "title": "Quantum Surge", "is_active": 1 }
+  }
+  ```
+
+#### Verify Scores
+- **URL**: `POST /api/admin-verify-score.php` *(Admin Only)*
+- **Actions**:
+  - Single: `{"action": "approve", "score_id": 240}`
+  - Bulk: `{"action": "approve_all_pending"}`
 - **Response (`200 OK`)**:
   ```json
   {
       "status": "success",
-      "game": "Space Blaster",
+      "message": "Score approved successfully.",
+      "score_id": 240,
+      "new_status": "approved"
+  }
+  ```
+
+---
+
+### 5. Analytics & Chart API
+
+#### Get Chart Aggregated Data
+- **URL**: `GET /api/get-chart-data.php?game=all&days=30`
+- **Response (`200 OK`)**:
+  ```json
+  {
+      "status": "success",
+      "game": "all",
       "days": 30,
       "data": [
           {
-              "date_point": "2026-11-06",
-              "highest_score": 8350,
-              "total_submissions": 2,
-              "average_score": 7500
-          },
-          {
-              "date_point": "2026-11-10",
-              "highest_score": 9850,
-              "total_submissions": 5,
-              "average_score": 8420
+              "date": "2026-11-10",
+              "highest_score": 469877,
+              "average_score": 154210.5,
+              "total_submissions": 8
           }
       ]
   }
@@ -401,126 +512,81 @@ All API endpoints strictly return standard JSON with UTF-8 encoding and appropri
 
 ---
 
-## Bonus & Polish Features (Step 7)
+## Database Schema & Architecture
 
-### Interactive Canvas Scores-Over-Time Chart
-- **Lightweight Vanilla Canvas 2D Engine ([js/chart.js](file:///c:/Users/Ihab-pc/Desktop/intern/js/chart.js))**:
-  - Zero heavy external libraries or CDN dependencies.
-  - High-DPI / Retina display crispness via dynamic `devicePixelRatio` scaling.
-  - Smooth Bezier curves, subtle background grid lines, and soft gradient area fill.
-  - Interactive hover detection with glowing nodes, vertical guide line, and responsive floating tooltips.
-  - Toggle between **Highest Score**, **Average Score**, and **Total Submissions**.
-  - Toggle between **7 Days**, **30 Days**, and **90 Days** snapshots.
-  - Seamlessly re-renders when games change, after admin moderation approvals, or when switching between Dark and Light mode.
+The database consists of 5 normalized tables with composite indexing:
 
-### Secret API Key Authorization (`X-API-Key`)
-- Direct game client and server-to-server integration:
-  - Submit scores by sending the `X-API-Key` HTTP header (or `api_key` payload parameter).
-  - Validated using timing-safe comparison (`hash_equals()`) against `API_SECRET_KEY` in `config.php`.
-  - Submissions authenticated via a valid Secret API Key are **pre-approved** immediately and allow specifying custom player handles.
-  - Requests lacking both a session and a valid API key return HTTP `401 Unauthorized`.
+```sql
+-- 1. Users Table (Bcrypt authentication & RBAC)
+CREATE TABLE IF NOT EXISTS users (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('player', 'admin') NOT NULL DEFAULT 'player',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-### IP & Session Submission Rate Limiting
-- **Protection Against Spam & Flooding**:
-  - Enforces a ceiling of **10 score submissions per minute** per client IP on `/api/post-score.php`.
-  - Backed by the lightweight MySQL table `rate_limits (ip_address, endpoint, hit_count, window_start)`.
-  - Exceeding the rate limit immediately returns HTTP `429 Too Many Requests` with a standard `Retry-After: <seconds>` header and a clear descriptive JSON message.
+-- 2. Dynamic Games Registry Table
+CREATE TABLE IF NOT EXISTS games (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(60) NOT NULL UNIQUE,
+    title VARCHAR(100) NOT NULL UNIQUE,
+    genre VARCHAR(50) DEFAULT 'Arcade',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-### Dark Mode & State Persistence
-- **Theme Toggle**:
-  - Seamless toggle button (`#themeToggle`) with sun/moon indicators.
-  - Refactored CSS custom properties (`--bg-primary`, `--bg-surface`, `--text-primary`, `--text-secondary`, `--border-color`, `--accent-color`, `--card-shadow`).
-  - High-contrast, accessibility-tested dark mode and crisp modern light mode styling.
-- **LocalStorage State Caching**:
-  - Persists the user's active theme across browser sessions (`theme` key).
-  - Falls back smoothly to system preference (`prefers-color-scheme`).
-  - Caches user filter preferences (`selectedGame`, `leaderboard_limit`, `leaderboard_sort`, `leaderboard_period`) so their preferred view is preserved on page reload.
+-- 3. Scores Table (Moderated rankings)
+CREATE TABLE IF NOT EXISTS scores (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NULL,
+    game VARCHAR(100) NOT NULL,
+    player_name VARCHAR(100) NOT NULL,
+    score INT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_scores_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_user_id (user_id),
+    INDEX idx_status_game_created_score (status, game, created_at, score DESC),
+    INDEX idx_status_created_score (status, created_at, score DESC),
+    INDEX idx_status_player_score (status, player_name, score DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
----
+-- 4. Rate Limiting Table (IP sliding window)
+CREATE TABLE IF NOT EXISTS rate_limits (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    action_type VARCHAR(32) NOT NULL,
+    attempts INT UNSIGNED NOT NULL DEFAULT 1,
+    last_attempt_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_ip_action (ip_address, action_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-## Platform Features & Filtration
-
-The application provides a comprehensive filtration control deck:
-
-1. **Game Selector**:
-   - Dynamic game dropdown fetched from `/api/get-games.php`.
-   - Special **"All Games"** option displaying cross-game scores with a dedicated "Game" column in the table.
-2. **Display Limit**:
-   - Segmented buttons for **Top 10**, **Top 15**, **Top 25**, **Top 50**, and **All** (up to 500 records).
-3. **Timeframe Filter**:
-   - **All-Time**: Global historical scores.
-   - **This Week**: Scores logged within the past 7 days (`created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`).
-   - **Today**: Scores logged today (`created_at >= CURDATE()`).
-4. **Sort Ordering**:
-   - **Highest Score (Default)**: `score DESC, created_at ASC`.
-   - **Lowest Score**: `score ASC, created_at ASC` (ideal for time-trial or golf scoring).
-   - **Newest First**: `created_at DESC, score DESC`.
-5. **Real-time Player Search**:
-   - Debounced search input that queries matching player handles without requiring a page reload.
-
----
-
-## Moderation Workflow & Score Verification
-
-To ensure leaderboard integrity, scores follow a strict lifecycle:
-
-```mermaid
-stateDiagram-v2
-    [*] --> Pending: Player submits score (POST /api/post-score.php)
-    Pending --> Approved: Admin approves score (POST /api/admin-verify-score.php)
-    Pending --> Rejected: Admin rejects score (POST /api/admin-verify-score.php)
-    [*] --> Approved: Server submits with X-API-Key (Pre-Approved)
-    Approved --> PublicLeaderboard: Appears on public table, chart & rank lookups
-    Rejected --> Hidden: Isolated from public views
+-- 5. Immutable Studio Audit Logs Table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT UNSIGNED NOT NULL,
+    admin_username VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    target_id INT UNSIGNED NULL,
+    details TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_created_at (created_at DESC),
+    INDEX idx_admin_id (admin_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
-
-1. **Submission**: Authenticated players submit their score. The score is assigned `status = 'pending'`.
-2. **Isolation**: The public API (`/api/get-scores.php`, `/api/get-chart-data.php`, and `/api/get-rank.php`) strictly filters `WHERE status = 'approved'`. Pending submissions cannot alter public rankings, podiums, or charts.
-3. **Admin Queue**: When an admin logs in, an **Admin Verification Queue** card appears dynamically above the leaderboard:
-   - Displays real-time counts of pending submissions.
-   - Shows submitter account, game, score, and submission timestamp.
-   - Provides single-click **Approve** and **Reject** buttons per submission.
-   - Provides a **Bulk Approve All Pending** button.
-4. **Instant Update**: Approving a score immediately moves it to the approved pool, and the active leaderboard and canvas chart automatically refresh.
-
----
-
-## Challenge Features (Option A)
-
-### Challenge 1: Time-Range Filters (Today, This Week, All-Time)
-- **Index-Optimized Queries**: Avoids table-scanning wrapper functions (e.g. `DATE(created_at)`), using range comparisons (`created_at >= CURDATE()`) backed by composite index `idx_status_game_created_score`.
-
-### Challenge 2: Player's Own Rank Lookup
-- Computes `MAX(score)` for personal best, `COUNT(*)` for total attempts, and `COUNT(*) + 1 WHERE score > :best_score` for relative leaderboard position, strictly evaluated across approved scores.
-
-### Challenge 3: 100 Random Scores Test Page
-- High-volume simulator at [test-simulator.html](file:///c:/Users/Ihab-pc/Desktop/intern/test-simulator.html):
-  - Sends 100 randomized scores with live progress, success/failure metrics, and latency counters.
-  - Automatically respects user session status or uses the Secret API Key toggle.
-  - Includes a 13-case automated out-of-range & validation test battery.
 
 ---
 
 ## Security & Performance Engineering
 
-1. **API Key Security**:
-   - Compares secret API keys with timing-safe `hash_equals()`. Secret keys are configured in `config.php` (git-ignored).
-2. **Rate Limiting Protection**:
-   - Enforces 10 submissions/minute per IP, returning standard HTTP 429 and `Retry-After` headers.
-3. **Password Security**:
-   - Passwords hashed using `password_hash($password, PASSWORD_DEFAULT)` (Bcrypt) and verified using timing-safe `password_verify()`.
-4. **Session Security**:
-   - Custom session parameters configured in `startSecureSession()`: `cookie_httponly = true`, `cookie_samesite = 'Lax'`, and strict mode enabled.
-5. **Cross-Site Scripting (XSS) Immunity**:
-   - Zero `innerHTML` for dynamic content. All usernames, game titles, chart labels, and status strings are rendered strictly via `document.createElement()`, `textContent`, and Canvas 2D text primitives.
-6. **SQL Injection Prevention**:
-   - 100% of queries use PDO prepared statements with bound parameters. Zero queries inside loops.
-7. **Signed 32-bit Integer Bound Enforcement**:
-   - Prevents MySQL numeric overflow (`SQLSTATE 22003`) by validating inputs against `MAX_SCORE = 2147483647` before SQL execution.
-8. **Optimized Composite Indexes**:
-   - `idx_user_id`: Fast join between `users` and `scores`.
-   - `idx_status_game_created_score` on `(status, game, created_at, score DESC)`: Covers filtered leaderboard queries without extra table scans.
-   - `idx_status_created_score` on `(status, created_at, score DESC)`: Covers cross-game leaderboard queries.
+1. **Window Functions Without Loops**: Per-game player rankings are generated with `DENSE_RANK() OVER (PARTITION BY game ORDER BY MAX(score) DESC)` in one prepared query. Zero queries in loops.
+2. **Timing-Safe Secrets**: API keys are validated using timing-safe `hash_equals()` against keys stored in `config.php`.
+3. **Sliding Window Rate Limiter**: 10 submissions per minute per IP returning HTTP `429 Too Many Requests` and `Retry-After` headers.
+4. **XSS Immunity**: Dynamic text is injected strictly using `document.createElement()` and `textContent`. Zero `innerHTML` for dynamic content.
+5. **SQL Injection Defense**: 100% prepared PDO statements with bound parameters.
+6. **Numeric Overflow Protection**: Enforced bounds (`0` to `2,147,483,647`) to prevent MySQL signed 32-bit overflow (`SQLSTATE 22003`).
+7. **Session Hardening**: Sessions configured with `cookie_httponly = true`, `cookie_samesite = 'Lax'`, and strict mode.
 
 ---
 
@@ -528,20 +594,20 @@ stateDiagram-v2
 
 | Issue / Edge Case | Root Cause / Vulnerability | Solution / Fix Implemented |
 |---|---|---|
-| **Numeric Out of Range** (`score > 2147483647`) | MySQL signed 32-bit `INT` maximum is 2,147,483,647. Values like `2147483648` or `999999999999999999999999` trigger SQLSTATE `22003` crash. | In `api/helpers.php`, raw scores are checked for digit length and compared against `2147483647` without integer overflow risks, returning HTTP 400. In `api/post-score.php`, PDO catches SQLSTATE `22003` as a graceful fallback. |
-| **Zero Score Rejection** (`score: 0` or `"0"`) | Standard PHP `empty($score)` evaluates `0` and `"0"` as empty, improperly rejecting valid scores of zero. | Replaced loose checks with `!isset($input['score']) \|\| (is_string($input['score']) && trim($input['score']) === '')` in `api/helpers.php`. |
-| **Float/Decimal Score Permissibility** | Numeric strings with decimals (e.g. `12.34`) or float literals could bypass loose numeric checks. | Added explicit `is_float($input['score'])` guard and `ctype_digit` string validation to enforce integer-only scores. |
-| **Whitespace-Only Inputs** | Inputs like `"   "` pass `isset()` and `!== ''` checks if not trimmed. | Added `trim()` validation for `player_name` and `game` to reject whitespace-only submissions with HTTP 400. |
-| **Oversized String Payloads** | Payloads exceeding database column width (100 characters) could trigger unhandled database truncation errors. | Enforced string length validation (`mb_strlen(trim(...)) <= 100`) returning HTTP 400. |
-| **Submission Flooding & DoS** | Malicious users or compromised clients could hammer `/api/post-score.php` with thousands of score inserts. | Implemented IP/session rate limiter returning HTTP `429 Too Many Requests` with `Retry-After` header when exceeding 10 requests per minute. |
-| **Unapproved Scores on Leaderboard** | Submitting unverified scores directly into public rankings allows cheating or vulgar submissions. | Implemented moderation pipeline with `status = 'pending'`, restricting public views strictly to `status = 'approved'`. |
-| **Player Impersonation** | Submitting scores with arbitrary `player_name` values could allow spoofing other players' scores. | Enforced session check in `api/post-score.php` locking score submission to the authenticated user's username (unless admin or trusted API key). |
-| **Privilege Escalation on Moderation API** | Insecure direct object reference or missing role checks could let normal players approve their own scores. | Enforced server-side `requireAdmin()` check returning HTTP 403 Forbidden for non-admin accounts. |
-| **XSS Payload Injection** | User handles containing HTML/JS tags (e.g. `<script>alert(1)</script>`) could execute if rendered via `innerHTML`. | Strictly used `document.createElement()` and `textContent` across all client scripts to ensure tags are rendered safely as plain text. |
+| **Numeric Out of Range** (`score > 2147483647`) | MySQL signed 32-bit `INT` maximum is 2,147,483,647. Values exceeding this crash with SQLSTATE `22003`. | Checked raw scores for digit count and validated against `MAX_SCORE` before SQL execution; caught `22003` as fallback. |
+| **Zero Score Rejection** (`score: 0`) | Loose PHP `empty($score)` evaluates `0` as empty, improperly rejecting valid zero scores. | Replaced loose checks with `!isset($input['score']) \|\| (is_string($input['score']) && trim($input['score']) === '')`. |
+| **Float/Decimal Permissibility** | Decimals (e.g. `12.34`) bypassed loose numeric checks. | Added explicit `is_float()` and `ctype_digit` checks to enforce integer-only scores. |
+| **Whitespace-Only Inputs** | Inputs like `"   "` passed standard string checks. | Enforced `trim()` validation for player handles and titles. |
+| **Oversized String Payloads** | Payloads exceeding 100 characters caused DB truncation errors. | Enforced length validation (`mb_strlen(trim(...)) <= 100`) returning HTTP 400. |
+| **Submission Flooding & DoS** | Malicious users could hammer score inserts. | Implemented IP rate limiter returning HTTP `429` with `Retry-After` when exceeding 10/minute. |
+| **Unapproved Scores on Leaderboard** | Direct inserts could allow vulgar or fraudulent scores into public standings. | Moderation pipeline with `status = 'pending'`, public view restricted strictly to `status = 'approved'`. |
+| **Privilege Escalation** | Direct ID manipulation could let normal users approve scores or create games. | Enforced server-side `requireAdmin()` check returning HTTP 403 Forbidden. |
+| **Admin Secret Key Hidden on Config Tab** | `api/get-config.php` did not start the session before calling `getCurrentUser()`, causing admin checks to evaluate as unauthenticated guest. | Added `startSecureSession()` at the top of `api/get-config.php`, added `Cache-Control: no-store`, and synchronized `fetchStudioConfig()` on login/registration and tab activation. |
+| **XSS Payload Injection** | User handles containing HTML/JS tags could execute if rendered via `innerHTML`. | Strictly used `document.createElement()` and `textContent` across all client scripts. |
 
 ---
 
-## Automated Testing Suite
+## Automated Testing Suite (36 Tests)
 
 The repository includes a comprehensive CLI end-to-end test suite (`test-e2e.php`) verifying all platform capabilities against the live HTTP server:
 
@@ -549,7 +615,7 @@ The repository includes a comprehensive CLI end-to-end test suite (`test-e2e.php
 php test-e2e.php
 ```
 
-### Verified Test Cases (26/26 PASS):
+### Verified Test Cases (36/36 PASS):
 1. Initial unauthenticated session check (`GET /api/session.php`).
 2. Unauthenticated score submission rejection (`401 Unauthorized`).
 3. Password validation on registration (`< 6 characters` returns `400 Bad Request`).
@@ -576,26 +642,33 @@ php test-e2e.php
 24. Chart Analytics API: `game=all` returns cross-game aggregations.
 25. Chart Analytics API: Missing game parameter returns HTTP 400.
 26. Submission Rate Limiting: Exceeding 10 submissions per minute triggers HTTP 429 Too Many Requests with `Retry-After`.
+27. Studio Config: `GET /api/get-config.php` (Public) returns dynamic bounds without secrets.
+28. Studio Config: `GET /api/get-config.php` (Admin) exposes admin_config and endpoints map.
+29. Telemetry KPIs: `GET /api/get-dashboard-stats.php` returns live KPI statistics.
+30. Game Registry Security: Non-admin calling `/api/admin-manage-games.php` is blocked.
+31. Game Registry: Admin creates new game title with audit logging (HTTP 201).
+32. Game Registry: Admin deactivates game title with audit logging (HTTP 200).
+33. Audit Trail: Admin actions are recorded in `GET /api/get-dashboard-stats.php`.
+34. Player Profile API: Missing `player_name` returns HTTP 400.
+35. Player Profile API: Non-existent player returns HTTP 404.
+36. Player Profile API: Existing player returns complete standings and windowed ranks.
 
 ---
 
 ## Client UI & Simulator Pages
 
-- **Main Leaderboard ([index.html](file:///c:/Users/Ihab-pc/Desktop/intern/index.html))**:
-  - Live session header with user status badge, Login/Register modal button, or Logout button.
-  - Theme Toggle button (`#themeToggle`) for switching between Dark and Light modes.
-  - Quick-fill demo credentials chips (`Admin Demo`, `Player Demo`).
-  - Interactive Admin Moderation Dashboard (rendered exclusively for admin sessions).
-  - Multi-dimensional Filtration Deck (Game, Limit, Sort, Search, Timeframe).
-  - Interactive HTML5 Canvas Analytics Chart ([js/chart.js](file:///c:/Users/Ihab-pc/Desktop/intern/js/chart.js)) showing daily trends with hover tooltips and metric switcher.
-  - Top 3 Podium Accents: Gold (#1), Silver (#2), Bronze (#3).
-  - Player Rank Lookup card with personal best, current rank, and submission counter.
-  - Authenticated Score Submission Form with live validation and input bounds protection.
-  - Fully responsive design on desktop, tablet, and narrow mobile viewports down to 375px.
+- **Main Studio Dashboard ([index.html](file:///c:/Users/Ihab-pc/Desktop/intern/index.html))**:
+  - **Modular Studio Shell**: Collapsible sidebar (260px expanded / 72px rail / mobile drawer) with 8 dedicated windowed tabs.
+  - **Glassmorphism Aesthetic**: Translucent frosted surfaces (`backdrop-filter: blur(16px)`), hairline borders, and radial mesh gradients across Dark and Light themes.
+  - **Zero Emojis**: 100% clean UI with inline geometric SVG icons (`stroke-width="1.75"`).
+  - **Live Telemetry Strip**: 4 real-time KPI cards reflecting global verified scores, active players, moderation alerts, and top title.
+  - **Data Export**: One-click CSV and JSON export buttons in the leaderboard command bar.
+  - **Interactive Player Modals**: Clickable player handles opening personal standing and match history.
+  - **Admin Studio Windows**: Dedicated moderation queue, title registry management, and audit log history.
 
 - **High-Volume Traffic Simulator ([test-simulator.html](file:///c:/Users/Ihab-pc/Desktop/intern/test-simulator.html))**:
+  - Matched Glassmorphism UI with clean SVG navigation and theme switcher.
   - Batch generation of 100 randomized scores (`0` to `950,000`).
-  - Built-in Secret API Key toggle (`wolves-secret-key-2026`) for direct server-to-server stress testing.
+  - Secret API Key toggle (`hyper-arena-secret-key-2026`) for direct server-to-server stress testing.
   - 13-case automated out-of-range and malicious payload test battery.
-  - Real-time progress bar, success/error counters, and network latency instrumentation.
-  - Live stream log table.
+  - Live progress track, real-time counters, and average network latency instrumentation.

@@ -1,6 +1,8 @@
 /**
- * Scores Over Time Chart Controller
- * Lightweight vanilla HTML5 Canvas 2D visualization (zero external dependencies).
+ * Game Leaderboard Platform - Analytics Canvas Visualization Engine
+ * 
+ * Lightweight vanilla HTML5 Canvas 2D engine (zero dependencies).
+ * Tabular figures, devicePixelRatio high-DPI scaling, and frosted glass aesthetic.
  */
 
 (function () {
@@ -25,7 +27,7 @@
     };
 
     /**
-     * Determines if dark mode is currently active on the root document.
+     * Determines whether dark mode is active.
      * @returns {boolean}
      */
     function isDarkMode() {
@@ -48,7 +50,7 @@
     }
 
     /**
-     * Formats an ISO date string (YYYY-MM-DD) into a short display format (e.g. Oct 25).
+     * Formats an ISO date string (YYYY-MM-DD) into short notation (e.g. Oct 25).
      * @param {string} dateStr
      * @returns {string}
      */
@@ -63,13 +65,13 @@
     }
 
     /**
-     * Adjusts canvas resolution for high-DPI (Retina) screens.
+     * Resizes canvas buffer to match physical pixels on high-DPI displays.
      */
     function resizeCanvas() {
         const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         const displayWidth = Math.max(300, Math.floor(rect.width));
-        const displayHeight = 260;
+        const displayHeight = 240;
 
         canvas.width = displayWidth * dpr;
         canvas.height = displayHeight * dpr;
@@ -78,25 +80,25 @@
     }
 
     /**
-     * Draws the entire chart onto the canvas.
+     * Renders the glassmorphic chart onto the canvas.
      */
     function drawChart() {
         const rect = canvas.getBoundingClientRect();
         const width = Math.max(300, Math.floor(rect.width));
-        const height = 260;
+        const height = 240;
 
         ctx.clearRect(0, 0, width, height);
 
         const dark = isDarkMode();
-        const textColor = dark ? '#94a3b8' : '#64748b';
-        const gridColor = dark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
-        const accentColor = '#6366f1';
-        const accentGlow = 'rgba(99, 102, 241, 0.35)';
+        const textColor = dark ? '#9ca3af' : '#64748b';
+        const gridColor = dark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+        const accentColor = dark ? '#6366f1' : '#2563eb';
+        const accentGlow = dark ? 'rgba(99, 102, 241, 0.35)' : 'rgba(37, 99, 235, 0.3)';
 
         // Empty state check
         if (!chartData || chartData.length === 0) {
             ctx.fillStyle = textColor;
-            ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.font = '13px system-ui, -apple-system, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('No score activity recorded for this period.', width / 2, height / 2);
@@ -104,10 +106,10 @@
         }
 
         const padding = {
-            top: 25,
-            right: 25,
-            bottom: 40,
-            left: 55,
+            top: 20,
+            right: 20,
+            bottom: 35,
+            left: 50,
         };
 
         const chartWidth = width - padding.left - padding.right;
@@ -116,18 +118,17 @@
         // Calculate min & max values
         const values = chartData.map((d) => d[currentMetric] || 0);
         let maxVal = Math.max(...values);
-        let minVal = 0; // Baseline at zero
+        let minVal = 0;
 
         if (maxVal === 0) {
             maxVal = 10;
         } else {
-            // Add 12% headroom
             maxVal = Math.ceil(maxVal * 1.12);
         }
 
-        // Draw horizontal grid lines & Y-axis labels
+        // Horizontal grid lines & Y-axis labels
         const gridSteps = 4;
-        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.font = '11px system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
 
@@ -143,12 +144,12 @@
             ctx.lineTo(width - padding.right, yPos);
             ctx.stroke();
 
-            // Y-axis label
+            // Y-axis numerical label
             ctx.fillStyle = textColor;
-            ctx.fillText(formatCompactNumber(Math.round(yVal)), padding.left - 10, yPos);
+            ctx.fillText(formatCompactNumber(Math.round(yVal)), padding.left - 8, yPos);
         }
 
-        // Calculate X & Y coordinates for points
+        // Coordinates mapping
         const points = [];
         const n = chartData.length;
 
@@ -166,7 +167,7 @@
             });
         }
 
-        // Draw area gradient fill under line
+        // Subtle gradient fill under curve
         if (points.length > 1) {
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
@@ -183,16 +184,16 @@
             ctx.closePath();
 
             const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
-            gradient.addColorStop(0, dark ? 'rgba(99, 102, 241, 0.35)' : 'rgba(99, 102, 241, 0.25)');
+            gradient.addColorStop(0, dark ? 'rgba(99, 102, 241, 0.28)' : 'rgba(37, 99, 235, 0.18)');
             gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
             ctx.fillStyle = gradient;
             ctx.fill();
         }
 
-        // Draw line connecting points
+        // Stroke line
         ctx.beginPath();
         if (points.length === 1) {
-            ctx.arc(points[0].x, points[0].y, 4, 0, Math.PI * 2);
+            ctx.arc(points[0].x, points[0].y, 3.5, 0, Math.PI * 2);
         } else {
             ctx.moveTo(points[0].x, points[0].y);
             for (let i = 0; i < points.length - 1; i++) {
@@ -203,136 +204,127 @@
             }
         }
         ctx.strokeStyle = accentColor;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 2.2;
         ctx.lineJoin = 'round';
         ctx.stroke();
 
-        // Draw X-axis date labels
+        // X-axis date labels
         ctx.fillStyle = textColor;
-        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.font = '11px system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
 
-        // Select a sensible number of X labels to avoid overcrowding
         const maxLabels = Math.min(8, n);
         const step = Math.max(1, Math.floor(n / maxLabels));
 
         for (let i = 0; i < n; i += step) {
             const pt = points[i];
-            const dateLabel = formatShortDate(pt.raw.date_point);
-            ctx.fillText(dateLabel, pt.x, padding.top + chartHeight + 10);
+            ctx.fillText(formatShortDate(pt.raw.date_point), pt.x, padding.top + chartHeight + 8);
         }
-        // Always draw the last point date if not drawn
         if ((n - 1) % step !== 0 && n > 1) {
             const lastPt = points[n - 1];
-            ctx.fillText(formatShortDate(lastPt.raw.date_point), lastPt.x, padding.top + chartHeight + 10);
+            ctx.fillText(formatShortDate(lastPt.raw.date_point), lastPt.x, padding.top + chartHeight + 8);
         }
 
-        // Draw dots at data points
+        // Circular Nodes
         points.forEach((pt, index) => {
             const isHovered = index === hoveredIndex;
             ctx.beginPath();
-            ctx.arc(pt.x, pt.y, isHovered ? 6 : 3.5, 0, Math.PI * 2);
+            ctx.arc(pt.x, pt.y, isHovered ? 5.5 : 3, 0, Math.PI * 2);
             ctx.fillStyle = isHovered ? '#ffffff' : accentColor;
             ctx.fill();
-            ctx.lineWidth = isHovered ? 3 : 1.5;
+            ctx.lineWidth = isHovered ? 2.5 : 1.5;
             ctx.strokeStyle = dark ? '#0b0f19' : '#ffffff';
             ctx.stroke();
 
             if (isHovered) {
-                // Outer glow ring
                 ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 9, 0, Math.PI * 2);
+                ctx.arc(pt.x, pt.y, 8.5, 0, Math.PI * 2);
                 ctx.strokeStyle = accentGlow;
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
         });
 
-        // If hovered, draw vertical guide line and tooltip
+        // Hover Guide & Tooltip
         if (hoveredIndex >= 0 && hoveredIndex < points.length) {
             const pt = points[hoveredIndex];
 
-            // Vertical indicator
             ctx.beginPath();
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = dark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.25)';
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = dark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
             ctx.lineWidth = 1;
             ctx.moveTo(pt.x, padding.top);
             ctx.lineTo(pt.x, padding.top + chartHeight);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Draw floating tooltip
             drawTooltip(pt, width, height, dark);
         }
     }
 
     /**
-     * Draws a styled tooltip for the hovered data point.
+     * Draws a frosted glass tooltip for the active hover point.
      */
     function drawTooltip(pt, canvasWidth, canvasHeight, dark) {
         const item = pt.raw;
         const dateStr = item.date_point;
         const metricName = metricLabels[currentMetric] || currentMetric;
         const valFormatted = Number(item[currentMetric] || 0).toLocaleString();
-        const subsFormatted = (item.total_submissions || 1) + ' submission' + (item.total_submissions === 1 ? '' : 's');
+        const subsFormatted = (item.total_submissions || 1) + ' match' + (item.total_submissions === 1 ? '' : 'es');
 
         const line1 = dateStr;
         const line2 = `${metricName}: ${valFormatted}`;
         const line3 = subsFormatted;
 
-        ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
         const w1 = ctx.measureText(line1).width;
-        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.font = '12px system-ui, -apple-system, sans-serif';
         const w2 = ctx.measureText(line2).width;
         const w3 = ctx.measureText(line3).width;
 
         const tipWidth = Math.max(w1, w2, w3) + 24;
-        const tipHeight = 68;
+        const tipHeight = 64;
 
         let tipX = pt.x + 12;
         let tipY = pt.y - tipHeight / 2;
 
-        // Flip to left if overflowing right edge
         if (tipX + tipWidth > canvasWidth - 10) {
             tipX = pt.x - tipWidth - 12;
         }
-        // Keep within top and bottom bounds
-        if (tipY < 10) tipY = 10;
-        if (tipY + tipHeight > canvasHeight - 10) tipY = canvasHeight - tipHeight - 10;
+        if (tipY < 8) tipY = 8;
+        if (tipY + tipHeight > canvasHeight - 8) tipY = canvasHeight - tipHeight - 8;
 
-        // Tooltip box
-        ctx.fillStyle = dark ? 'rgba(21, 29, 48, 0.96)' : 'rgba(255, 255, 255, 0.96)';
-        ctx.strokeStyle = dark ? '#27354f' : '#cbd5e1';
+        // Tooltip container
+        ctx.fillStyle = dark ? 'rgba(17, 24, 39, 0.92)' : 'rgba(255, 255, 255, 0.95)';
+        ctx.strokeStyle = dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        roundRect(ctx, tipX, tipY, tipWidth, tipHeight, 8);
+        roundRect(ctx, tipX, tipY, tipWidth, tipHeight, 6);
         ctx.fill();
         ctx.stroke();
 
-        // Tooltip text
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
         // Line 1: Date
-        ctx.fillStyle = dark ? '#f8fafc' : '#0f172a';
-        ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(line1, tipX + 12, tipY + 10);
+        ctx.fillStyle = dark ? '#f9fafb' : '#0f172a';
+        ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+        ctx.fillText(line1, tipX + 10, tipY + 8);
 
-        // Line 2: Metric value (accent color)
-        ctx.fillStyle = '#6366f1';
-        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(line2, tipX + 12, tipY + 28);
+        // Line 2: Metric value
+        ctx.fillStyle = dark ? '#38bdf8' : '#2563eb';
+        ctx.font = '600 12px system-ui, -apple-system, sans-serif';
+        ctx.fillText(line2, tipX + 10, tipY + 25);
 
         // Line 3: Submissions count
-        ctx.fillStyle = dark ? '#94a3b8' : '#64748b';
-        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(line3, tipX + 12, tipY + 46);
+        ctx.fillStyle = dark ? '#9ca3af' : '#64748b';
+        ctx.font = '11px system-ui, -apple-system, sans-serif';
+        ctx.fillText(line3, tipX + 10, tipY + 43);
     }
 
     /**
-     * Helper to trace rounded rectangles on Canvas.
+     * Traces rounded rectangle on Canvas.
      */
     function roundRect(context, x, y, width, height, radius) {
         context.beginPath();
@@ -349,17 +341,16 @@
     }
 
     /**
-     * Mouse movement handler for hover detection.
+     * Mouse movement listener for hover telemetry.
      */
     function handleMouseMove(e) {
         if (!chartData || chartData.length === 0) return;
 
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
 
         const width = rect.width;
-        const padding = { left: 55, right: 25 };
+        const padding = { left: 50, right: 20 };
         const chartWidth = width - padding.left - padding.right;
         const n = chartData.length;
 
@@ -377,8 +368,7 @@
             }
         }
 
-        // Only hover if mouse is reasonably close to a data column
-        const maxHoverDistance = Math.max(30, (chartWidth / n) * 0.8);
+        const maxHoverDistance = Math.max(28, (chartWidth / n) * 0.85);
         if (minDistance <= maxHoverDistance) {
             if (hoveredIndex !== closestIndex) {
                 hoveredIndex = closestIndex;
@@ -398,7 +388,7 @@
     }
 
     /**
-     * Fetches chart data from the REST API endpoint and triggers re-render.
+     * Fetches chart aggregated data from the REST API.
      * @param {string} [game]
      * @param {number} [days]
      * @param {string} [metric]
@@ -411,7 +401,7 @@
 
         const statusEl = document.getElementById('chartStatus');
         if (statusEl) {
-            statusEl.textContent = 'Updating chart...';
+            statusEl.textContent = 'Updating analytics...';
         }
 
         try {
@@ -441,17 +431,16 @@
                 statusEl.textContent = `${totalPoints} daily snapshot${totalPoints === 1 ? '' : 's'} recorded`;
             }
         } catch (err) {
-            console.error('Failed to load score chart:', err);
             chartData = [];
             resizeCanvas();
             drawChart();
             if (statusEl) {
-                statusEl.textContent = 'Chart temporarily unavailable';
+                statusEl.textContent = 'Analytics temporarily unavailable';
             }
         }
     }
 
-    // Attach event listeners
+    // Attach listeners
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseleave', handleMouseLeave);
 
@@ -460,7 +449,7 @@
         drawChart();
     });
 
-    // Timeframe toggle buttons inside chart card
+    // Timeframe toggle buttons
     document.querySelectorAll('.chart-days-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.chart-days-btn').forEach((b) => b.classList.remove('active'));
@@ -470,7 +459,7 @@
         });
     });
 
-    // Metric selector dropdown or buttons
+    // Metric selector dropdown
     const metricSelect = document.getElementById('chartMetricSelect');
     if (metricSelect) {
         metricSelect.addEventListener('change', () => {
@@ -479,7 +468,7 @@
         });
     }
 
-    // Expose public API
+    // Expose API
     window.loadScoreChart = loadScoreChart;
     window.refreshScoreChartTheme = function () {
         drawChart();
@@ -491,4 +480,3 @@
         loadScoreChart(currentGame, currentDays, currentMetric);
     });
 })();
-

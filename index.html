@@ -1,367 +1,1274 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Leaderboard Platform</title>
+    <title>Hyper Arena - Leaderboard Platform</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/app.js" defer></script>
-    <script src="js/chart.js" defer></script>
+    <script type="module" src="js/app.js"></script>
 </head>
+
 <body>
-    <!-- Top Navigation & Auth Bar -->
-    <header class="app-header">
-        <div class="header-container">
-            <div class="header-content">
-                <h1 class="app-title">Game Leaderboard Platform</h1>
-                <p class="app-subtitle">Global competitive rankings, custom time-range filtration &amp; verified score submissions</p>
-            </div>
+    <div id="appShell" class="app-layout">
+        <!-- Sidebar Backdrop for Mobile Drawer -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
-            <div class="header-actions">
-                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Dark / Light Mode" title="Toggle Theme">
-                    <span id="themeToggleIcon" class="theme-toggle-icon">🌙</span>
-                    <span id="themeToggleText" class="theme-toggle-text">Dark</span>
+        <!-- Collapsible Studio Sidebar -->
+        <aside id="appSidebar" class="app-sidebar" aria-label="Studio Dashboard Navigation">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="brand-titles">
+                        <span id="sidebarAppTitle" class="brand-title">Hyper Arena</span>
+                        <span class="brand-subtitle">Leaderboard &amp; Telemetry</span>
+                    </div>
+                </div>
+                <button type="button" id="btnToggleSidebar" class="sidebar-toggle-btn" title="Toggle Sidebar"
+                    aria-label="Toggle Sidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                 </button>
-                <a href="test-simulator.html" class="nav-btn">⚡ 100 Scores Simulator</a>
+            </div>
 
-                <!-- Auth Widget: Populated dynamically by app.js -->
-                <div id="authWidget" class="auth-widget">
-                    <div id="authLoggedOut" class="auth-buttons">
-                        <button type="button" id="btnOpenAuth" class="btn btn-outline-primary">Log In / Sign Up</button>
-                    </div>
+            <!-- Sidebar Navigation Tabs -->
+            <nav class="sidebar-nav" role="tablist" aria-label="Workspace Tabs">
+                <div class="nav-section-label">Player Hub</div>
 
-                    <div id="authLoggedIn" class="user-session hidden">
-                        <div class="user-profile">
-                            <span class="user-icon">👤</span>
-                            <span id="sessionUsername" class="user-name">User</span>
-                            <span id="sessionRoleBadge" class="badge-role">Player</span>
-                        </div>
-                        <button type="button" id="btnLogout" class="btn btn-sm btn-secondary">Log Out</button>
+                <button type="button" class="nav-tab-btn active" data-tab="leaderboard" id="tabNavLeaderboard"
+                    role="tab" aria-selected="true" title="Leaderboard Standings">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                            <path d="M4 22h16"></path>
+                            <path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34"></path>
+                            <path d="M6 4h12v7a6 6 0 0 1-12 0V4z"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Leaderboard</span>
+                </button>
+
+                <button type="button" class="nav-tab-btn" data-tab="analytics" id="tabNavAnalytics" role="tab"
+                    aria-selected="false" title="Performance Analytics">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Analytics</span>
+                </button>
+
+                <button type="button" class="nav-tab-btn" data-tab="submit-rank" id="tabNavSubmitRank" role="tab"
+                    aria-selected="false" title="Submit Score &amp; Check Rank">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Submit &amp; Rank</span>
+                </button>
+
+                <div id="navAdminSectionLabel" class="nav-section-label hidden">Studio Admin</div>
+
+                <button type="button" class="nav-tab-btn nav-admin-item hidden" data-tab="moderation"
+                    id="tabNavModeration" role="tab" aria-selected="false" title="Moderation Queue">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <polyline points="9 12 11 14 15 10"></polyline>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Moderation</span>
+                    <span id="navPendingBadge" class="nav-badge hidden">0</span>
+                </button>
+
+                <button type="button" class="nav-tab-btn nav-admin-item hidden" data-tab="game-registry"
+                    id="tabNavGameRegistry" role="tab" aria-selected="false" title="Dynamic Game Registry">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Game Registry</span>
+                </button>
+
+                <button type="button" class="nav-tab-btn nav-admin-item hidden" data-tab="audit-trail"
+                    id="tabNavAuditTrail" role="tab" aria-selected="false" title="Moderation Audit Trail">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 14 14"></polyline>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Audit Trail</span>
+                </button>
+
+                <button type="button" class="nav-tab-btn nav-admin-item hidden" data-tab="studio-api"
+                    id="tabNavStudioApi" role="tab" aria-selected="false" title="Studio API &amp; Dynamic Config">
+                    <span class="nav-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="7.5" cy="15.5" r="5.5"></circle>
+                            <path d="M21 2l-9.6 9.6"></path>
+                            <path d="M15.5 7.5l3 3L22 7l-3-3"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Studio API</span>
+                </button>
+            </nav>
+
+            <!-- Anchored Sidebar User Profile Pod (Bottom of Sidebar) -->
+            <div class="sidebar-footer">
+                <div id="sidebarUserPod" class="sidebar-user-pod" role="button" tabindex="0"
+                    title="Account &amp; Session" aria-label="Account &amp; Session">
+                    <div id="sidebarUserAvatar" class="user-avatar-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
                     </div>
+                    <div class="user-pod-details">
+                        <span id="sidebarUsername" class="user-name-text">Guest</span>
+                        <span id="sidebarRoleBadge" class="user-role-subtext">Sign In / Register</span>
+                    </div>
+                    <span class="user-pod-chevron" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </span>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <!-- Quick Evaluation Credentials Hint -->
-        <div class="demo-credentials-banner">
-            <span>Demo Credentials:</span>
-            <button type="button" class="demo-chip" data-user="admin" data-pass="Admin123!">Admin (admin / Admin123!)</button>
-            <button type="button" class="demo-chip" data-user="player1" data-pass="Player123!">Player (player1 / Player123!)</button>
-        </div>
-    </header>
+        <!-- Main Workspace -->
+        <div class="workspace-area">
+            <!-- Glass Header & Command Bar (Keep API Online removed) -->
+            <header class="workspace-header">
+                <div class="header-left">
+                    <button type="button" id="btnMobileSidebarToggle" class="mobile-menu-btn"
+                        aria-label="Toggle Navigation">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
 
-    <!-- Main Content Area -->
-    <main class="app-main">
-        <div class="app-container">
+                    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+                        <span class="breadcrumb-studio">Studio</span>
+                        <span class="breadcrumb-separator" aria-hidden="true">/</span>
+                        <span id="activeWindowBreadcrumb" class="breadcrumb-active">Leaderboard</span>
+                    </nav>
+                </div>
 
-            <!-- Admin Moderation Queue (Rendered only when logged in as Admin) -->
-            <section id="adminDashboard" class="card admin-card hidden" aria-labelledby="adminHeading">
-                <div class="card-header">
-                    <div>
-                        <h2 id="adminHeading" class="card-title">🛡️ Admin Verification Queue</h2>
-                        <p class="card-desc">Review and approve submitted scores before they appear on the public leaderboard</p>
+                <div class="header-right">
+                    <!-- Simulator Link -->
+                    <a href="test-simulator.html" class="nav-link-btn" title="Open High-Volume Traffic Simulator">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        <span>Simulator</span>
+                    </a>
+
+                    <!-- Theme Toggle with Moon/Sun SVG Icon -->
+                    <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Theme"
+                        title="Toggle Theme">
+                        <span id="themeToggleIcon" class="theme-toggle-icon">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </span>
+                        <span id="themeToggleText">Dark</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Studio Telemetry KPI Cards -->
+            <section class="kpi-grid" aria-label="Studio Telemetry KPIs">
+                <div class="kpi-card">
+                    <div class="kpi-icon-wrap" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                            <path d="M4 22h16"></path>
+                            <path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34"></path>
+                            <path d="M6 4h12v7a6 6 0 0 1-12 0V4z"></path>
+                        </svg>
                     </div>
-                    <div class="admin-header-actions">
-                        <button type="button" id="btnApproveAll" class="btn btn-sm btn-success">Approve All Pending</button>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Verified Scores</span>
+                        <span id="kpiTotalScores" class="kpi-value num">--</span>
                     </div>
                 </div>
 
-                <div class="admin-tabs-bar">
-                    <div class="status-tabs" role="tablist">
-                        <button type="button" class="admin-tab active" data-status="pending">Pending (<span id="adminCountPending">0</span>)</button>
-                        <button type="button" class="admin-tab" data-status="approved">Approved (<span id="adminCountApproved">0</span>)</button>
-                        <button type="button" class="admin-tab" data-status="rejected">Rejected (<span id="adminCountRejected">0</span>)</button>
+                <div class="kpi-card">
+                    <div class="kpi-icon-wrap" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Active Competitors</span>
+                        <span id="kpiActivePlayers" class="kpi-value num">--</span>
                     </div>
                 </div>
 
-                <div id="adminQueueStatus" class="status-message" aria-live="polite"></div>
+                <div class="kpi-card" id="kpiPendingCard">
+                    <div class="kpi-icon-wrap" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Pending Moderation</span>
+                        <span id="kpiPendingScores" class="kpi-value num">--</span>
+                    </div>
+                </div>
 
-                <div class="table-responsive">
-                    <table class="leaderboard-table admin-table">
-                        <thead>
-                            <tr>
-                                <th scope="col" style="width: 50px;">ID</th>
-                                <th scope="col">Game</th>
-                                <th scope="col">Player</th>
-                                <th scope="col" style="text-align: right;">Score</th>
-                                <th scope="col">Submitted</th>
-                                <th scope="col" style="text-align: center; width: 160px;">Verification Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminQueueBody">
-                            <!-- Populated dynamically via textContent -->
-                        </tbody>
-                    </table>
+                <div class="kpi-card">
+                    <div class="kpi-icon-wrap" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Most Played Title</span>
+                        <span id="kpiMostPlayed" class="kpi-value kpi-value-text">--</span>
+                    </div>
                 </div>
             </section>
 
-            <!-- Leaderboard Card with Comprehensive Filtration -->
-            <section class="card leaderboard-card" aria-labelledby="leaderboardHeading">
-                <div class="card-header">
-                    <h2 id="leaderboardHeading" class="card-title">Leaderboard Rankings</h2>
-                    <span id="activeFilterBadge" class="filter-summary-badge">All Games &bull; Top 10 &bull; All-Time</span>
-                </div>
+            <!-- Window Panels Container -->
+            <main class="window-container">
+                <!-- ========================================================
+                     Panel 1: Leaderboard Standings
+                     ======================================================== -->
+                <section id="panelLeaderboard" class="window-panel active" aria-labelledby="leaderboardHeading">
+                    <!-- Integrated Command Filtration Strip -->
+                    <div class="command-bar" aria-label="Leaderboard Filters">
+                        <div class="command-row-primary">
+                            <!-- Target Title -->
+                            <div class="filter-field">
+                                <label for="gameSelector" class="field-label">Target Title</label>
+                                <select id="gameSelector" class="glass-select">
+                                    <option value="all">All Games</option>
+                                </select>
+                            </div>
 
-                <!-- Comprehensive Filtration Bar -->
-                <div class="filtration-section">
-                    <div class="filter-row">
-                        <!-- Game Filter -->
-                        <div class="filter-field">
-                            <label for="gameSelector" class="filter-label">Game</label>
-                            <select id="gameSelector" class="game-select">
-                                <option value="all">All Games</option>
-                            </select>
+                            <!-- Display Limit -->
+                            <div class="filter-field">
+                                <label for="limitSelector" class="field-label">Limit</label>
+                                <select id="limitSelector" class="glass-select">
+                                    <option value="10" selected>Top 10</option>
+                                    <option value="15">Top 15</option>
+                                    <option value="25">Top 25</option>
+                                    <option value="50">Top 50</option>
+                                    <option value="100">Top 100</option>
+                                    <option value="all">All Records</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort Order -->
+                            <div class="filter-field">
+                                <label for="sortSelector" class="field-label">Ranking Metric</label>
+                                <select id="sortSelector" class="glass-select">
+                                    <option value="score_desc" selected>Highest Score First</option>
+                                    <option value="score_asc">Lowest Score First</option>
+                                    <option value="newest">Newest First</option>
+                                </select>
+                            </div>
+
+                            <!-- Player Search -->
+                            <div class="filter-field">
+                                <label for="searchInput" class="field-label">Filter Player</label>
+                                <div class="search-wrapper">
+                                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="searchInput" class="glass-input"
+                                        placeholder="Search player handle..." maxlength="100" autocomplete="off">
+                                    <button type="button" id="btnClearSearch" class="btn-clear-search hidden"
+                                        title="Clear search">&times;</button>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Limit Filter -->
-                        <div class="filter-field">
-                            <label for="limitSelector" class="filter-label">Display Limit</label>
-                            <select id="limitSelector" class="game-select">
-                                <option value="10" selected>Top 10</option>
-                                <option value="15">Top 15</option>
-                                <option value="25">Top 25</option>
-                                <option value="50">Top 50</option>
-                                <option value="all">All Scores</option>
-                            </select>
-                        </div>
+                        <div class="command-row-secondary">
+                            <div class="filter-field" style="flex-direction: row; align-items: center; gap: 0.65rem;">
+                                <span class="field-label">Timeframe:</span>
+                                <div class="segmented-control" role="tablist" aria-label="Time period">
+                                    <button type="button" class="seg-btn period-btn active" data-period="all" role="tab"
+                                        aria-selected="true">All-Time</button>
+                                    <button type="button" class="seg-btn period-btn" data-period="week" role="tab"
+                                        aria-selected="false">This Week</button>
+                                    <button type="button" class="seg-btn period-btn" data-period="today" role="tab"
+                                        aria-selected="false">Today</button>
+                                </div>
+                            </div>
 
-                        <!-- Sort Order -->
-                        <div class="filter-field">
-                            <label for="sortSelector" class="filter-label">Sort Order</label>
-                            <select id="sortSelector" class="game-select">
-                                <option value="score_desc" selected>Highest Score First</option>
-                                <option value="score_asc">Lowest Score First</option>
-                                <option value="newest">Newest Approved First</option>
-                            </select>
-                        </div>
+                            <div class="command-actions-right">
+                                <div id="activeFilterBadge" class="active-filter-summary">All Games &bull; Top 10 &bull;
+                                    All-Time</div>
 
-                        <!-- Player Search -->
-                        <div class="filter-field filter-search">
-                            <label for="searchInput" class="filter-label">Search Player</label>
-                            <div class="search-input-wrapper">
-                                <input type="text" id="searchInput" class="form-input" placeholder="Filter by player..." maxlength="100" autocomplete="off">
-                                <button type="button" id="btnClearSearch" class="btn-clear-search hidden" title="Clear search">&times;</button>
+                                <!-- Data Export Group -->
+                                <div class="export-btn-group" role="group" aria-label="Export Data">
+                                    <button type="button" id="btnExportCsv" class="btn btn-sm btn-secondary export-btn"
+                                        title="Download current leaderboard as CSV">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" id="btnExportJson" class="btn btn-sm btn-secondary export-btn"
+                                        title="Download current leaderboard as JSON">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                        <span>Export JSON</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Time-Range Segmented Tabs -->
-                    <div class="filter-row filter-row-periods">
-                        <span class="filter-label">Timeframe:</span>
-                        <div class="period-filter" role="tablist" aria-label="Time period filter">
-                            <button type="button" class="period-btn active" data-period="all" role="tab" aria-selected="true">All-Time</button>
-                            <button type="button" class="period-btn" data-period="week" role="tab" aria-selected="false">This Week</button>
-                            <button type="button" class="period-btn" data-period="today" role="tab" aria-selected="false">Today</button>
+                    <!-- Leaderboard Table Card -->
+                    <div class="glass-card">
+                        <div class="glass-card-header">
+                            <div>
+                                <h2 id="leaderboardHeading" class="glass-card-title">Leaderboard Standings</h2>
+                                <p class="glass-card-desc">Click any player handle to inspect full personal standings
+                                    and performance telemetry</p>
+                            </div>
+                        </div>
+
+                        <div id="leaderboardStatus" class="status-msg"></div>
+
+                        <div class="table-glass-wrap">
+                            <table id="leaderboardTable" class="glass-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="th-rank">Rank</th>
+                                        <th scope="col" id="thGameCol">Game</th>
+                                        <th scope="col">Player</th>
+                                        <th scope="col" class="th-score">Score</th>
+                                        <th scope="col" class="th-date">Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardBody">
+                                    <!-- Populated dynamically by app.js strictly via textContent -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="emptyState" class="empty-state hidden">
+                            <p id="emptyStateText">No approved scores match your selected filters.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================
+                     Panel 2: Performance Analytics
+                     ======================================================== -->
+                <section id="panelAnalytics" class="window-panel hidden" aria-labelledby="chartHeading">
+                    <div class="glass-card">
+                        <div class="glass-card-header">
+                            <div>
+                                <h2 id="chartHeading" class="glass-card-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                    </svg>
+                                    <span>Performance Analytics</span>
+                                </h2>
+                                <p class="glass-card-desc">Chronological score trajectory &amp; submission volume across
+                                    recorded titles</p>
+                            </div>
+                            <div class="chart-header-controls">
+                                <select id="chartMetricSelect" class="glass-select chart-metric-select">
+                                    <option value="highest_score" selected>Highest Score</option>
+                                    <option value="average_score">Average Score</option>
+                                    <option value="total_submissions">Total Submissions</option>
+                                </select>
+
+                                <div class="segmented-control" role="group" aria-label="Chart timeframe">
+                                    <button type="button" class="seg-btn chart-days-btn" data-days="7">7D</button>
+                                    <button type="button" class="seg-btn chart-days-btn active"
+                                        data-days="30">30D</button>
+                                    <button type="button" class="seg-btn chart-days-btn" data-days="90">90D</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-canvas-wrap">
+                            <canvas id="scoreChart" width="800" height="260"></canvas>
+                        </div>
+
+                        <div class="chart-footer">
+                            <span id="chartStatus" class="num">Loading analytics snapshots...</span>
+                            <span>Interactive: Hover over data nodes for detailed telemetry</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================
+                     Panel 3: Submit Score & Personal Rank Lookup
+                     ======================================================== -->
+                <section id="panelSubmitRank" class="window-panel hidden" aria-labelledby="submitRankHeading">
+                    <div class="two-column-grid">
+                        <!-- Submit Score Card -->
+                        <div class="glass-card" aria-labelledby="submitHeading">
+                            <div class="glass-card-header">
+                                <div>
+                                    <h2 id="submitHeading" class="glass-card-title">Submit Verified Score</h2>
+                                    <p class="glass-card-desc">Record a competitive match score for validation</p>
+                                </div>
+                            </div>
+
+                            <div id="formFeedback" class="status-msg"></div>
+
+                            <!-- Unauthenticated Lock Box -->
+                            <div id="authRequiredBox" class="auth-lock-card hidden">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                <h3>Authentication Required</h3>
+                                <p>Sign in to submit verified scores to the leaderboard.</p>
+                                <button type="button" id="btnPromptAuth" class="btn btn-primary btn-sm"
+                                    style="margin-top: 0.5rem;">Sign In to Submit</button>
+                            </div>
+
+                            <!-- Authenticated Score Form -->
+                            <form id="scoreForm" class="sidebar-form" novalidate>
+                                <div class="submitter-identity-row">
+                                    <span class="submitter-identity-label">Player:</span>
+                                    <span id="submitUserLabel" class="submitter-identity-name">User</span>
+                                </div>
+
+                                <!-- Admin Custom Handle Override -->
+                                <div id="adminPlayerNameGroup" class="filter-field hidden">
+                                    <label for="playerNameOverrideInput" class="field-label">Custom Player Handle (Admin
+                                        Override)</label>
+                                    <input type="text" id="playerNameOverrideInput" class="glass-input"
+                                        placeholder="Optional custom handle..." maxlength="100">
+                                </div>
+
+                                <div class="filter-field">
+                                    <label for="formGameInput" class="field-label">Game Title</label>
+                                    <input type="text" id="formGameInput" class="glass-input" list="gamesDatalist"
+                                        placeholder="Select or enter title..." required>
+                                    <datalist id="gamesDatalist"></datalist>
+                                </div>
+
+                                <div class="filter-field">
+                                    <label for="scoreInput" class="field-label">Final Score</label>
+                                    <input type="number" id="scoreInput" class="glass-input num"
+                                        placeholder="e.g. 12500" min="0" max="2147483647" step="1" required>
+                                </div>
+
+                                <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Submit for
+                                    Verification</button>
+                            </form>
+                        </div>
+
+                        <!-- Player Rank Lookup Card -->
+                        <div class="glass-card" aria-labelledby="rankHeading">
+                            <div class="glass-card-header">
+                                <div>
+                                    <h2 id="rankHeading" class="glass-card-title">Personal Rank Lookup</h2>
+                                    <p class="glass-card-desc">Check standings and personal bests for any player handle
+                                    </p>
+                                </div>
+                            </div>
+
+                            <form id="rankForm" class="sidebar-form" novalidate>
+                                <div class="filter-field">
+                                    <label for="rankPlayerInput" class="field-label">Player Username</label>
+                                    <input type="text" id="rankPlayerInput" class="glass-input"
+                                        placeholder="e.g. AcePilot" maxlength="100" autocomplete="off" required>
+                                </div>
+
+                                <button type="submit" id="rankBtn" class="btn btn-secondary btn-block">Find
+                                    Rank</button>
+                            </form>
+
+                            <div id="rankResult" class="rank-result-box hidden" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================
+                     Panel 4: Moderation Queue (Admin)
+                     ======================================================== -->
+                <section id="panelModeration" class="window-panel hidden" aria-labelledby="adminHeading">
+                    <div id="adminModerationGuard" class="admin-guard-banner hidden">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <div>
+                            <h3>Admin Privileges Required</h3>
+                            <p>You must be signed in with an administrator account to access the score moderation queue.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="adminModerationContent" class="glass-card">
+                        <div class="glass-card-header">
+                            <div>
+                                <h2 id="adminHeading" class="glass-card-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                        <polyline points="9 12 11 14 15 10"></polyline>
+                                    </svg>
+                                    <span>Score Moderation Queue</span>
+                                </h2>
+                                <p class="glass-card-desc">Review submitted scores and protect leaderboard integrity</p>
+                            </div>
+                            <div class="admin-header-actions">
+                                <button type="button" id="btnApproveAll" class="btn btn-sm btn-success">Approve All
+                                    Pending</button>
+                            </div>
+                        </div>
+
+                        <div class="admin-tabs" role="tablist">
+                            <button type="button" class="admin-tab-btn admin-tab active" data-status="pending"
+                                role="tab">
+                                Pending (<span id="adminCountPending" class="num">0</span>)
+                            </button>
+                            <button type="button" class="admin-tab-btn admin-tab" data-status="approved" role="tab">
+                                Approved (<span id="adminCountApproved" class="num">0</span>)
+                            </button>
+                            <button type="button" class="admin-tab-btn admin-tab" data-status="rejected" role="tab">
+                                Rejected (<span id="adminCountRejected" class="num">0</span>)
+                            </button>
+                        </div>
+
+                        <div id="adminQueueStatus" class="status-msg"></div>
+
+                        <div class="table-glass-wrap">
+                            <table class="glass-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 50px;">ID</th>
+                                        <th scope="col">Game</th>
+                                        <th scope="col">Player</th>
+                                        <th scope="col" style="text-align: right;">Score</th>
+                                        <th scope="col">Date</th>
+                                        <th scope="col" style="text-align: center; width: 140px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminQueueBody">
+                                    <!-- Populated dynamically by app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================
+                     Panel 5: Dynamic Game Registry (Admin)
+                     ======================================================== -->
+                <section id="panelGameRegistry" class="window-panel hidden" aria-labelledby="registryHeading">
+                    <div id="adminRegistryGuard" class="admin-guard-banner hidden">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <div>
+                            <h3>Admin Privileges Required</h3>
+                            <p>You must be signed in with an administrator account to manage registered studio titles.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="adminRegistryContent">
+                        <!-- Create New Game Form Card -->
+                        <div class="glass-card" style="margin-bottom: 1.5rem;">
+                            <div class="glass-card-header">
+                                <div>
+                                    <h2 id="registryHeading" class="glass-card-title">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="3" y="3" width="7" height="7"></rect>
+                                            <rect x="14" y="3" width="7" height="7"></rect>
+                                            <rect x="14" y="14" width="7" height="7"></rect>
+                                            <rect x="3" y="14" width="7" height="7"></rect>
+                                        </svg>
+                                        <span>Register New Game Title</span>
+                                    </h2>
+                                    <p class="glass-card-desc">Add a new official game title to the dynamic registry</p>
+                                </div>
+                            </div>
+
+                            <div id="gameRegistryFormFeedback" class="status-msg"></div>
+
+                            <form id="createGameForm" class="sidebar-form inline-creation-form" novalidate>
+                                <div class="filter-field" style="flex: 2;">
+                                    <label for="newGameTitle" class="field-label">Game Title *</label>
+                                    <input type="text" id="newGameTitle" class="glass-input"
+                                        placeholder="e.g. Galactic Odyssey" maxlength="100" required>
+                                </div>
+                                <div class="filter-field" style="flex: 3;">
+                                    <label for="newGameDesc" class="field-label">Description (Optional)</label>
+                                    <input type="text" id="newGameDesc" class="glass-input"
+                                        placeholder="e.g. Space exploration tactical RPG..." maxlength="255">
+                                </div>
+                                <div class="filter-field" style="flex: 1; align-self: flex-end;">
+                                    <button type="submit" id="btnCreateGame" class="btn btn-primary btn-block">Add
+                                        Game</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Active Titles Table Card -->
+                        <div class="glass-card">
+                            <div class="glass-card-header">
+                                <div>
+                                    <h3 class="glass-card-title">Registered Titles &amp; Status</h3>
+                                    <p class="glass-card-desc">Toggle title visibility on the public leaderboard and
+                                        submission forms</p>
+                                </div>
+                                <button type="button" id="btnRefreshGames" class="btn btn-sm btn-secondary">Refresh
+                                    Titles</button>
+                            </div>
+
+                            <div id="gameRegistryTableStatus" class="status-msg"></div>
+
+                            <div class="table-glass-wrap">
+                                <table class="glass-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" style="width: 50px;">ID</th>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Description</th>
+                                            <th scope="col" style="text-align: right;">Verified Scores</th>
+                                            <th scope="col" style="text-align: center;">Status</th>
+                                            <th scope="col" style="text-align: center; width: 140px;">Toggle Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="gamesTableBody">
+                                        <!-- Populated dynamically by app.js -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================
+                     Panel 6: Moderation Audit Trail (Admin)
+                     ======================================================== -->
+                <section id="panelAuditTrail" class="window-panel hidden" aria-labelledby="auditHeading">
+                    <div id="adminAuditGuard" class="admin-guard-banner hidden">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <div>
+                            <h3>Admin Privileges Required</h3>
+                            <p>You must be signed in with an administrator account to view the studio audit logs.</p>
+                        </div>
+                    </div>
+
+                    <div id="adminAuditContent" class="glass-card">
+                        <div class="glass-card-header">
+                            <div>
+                                <h2 id="auditHeading" class="glass-card-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 14 14"></polyline>
+                                    </svg>
+                                    <span>Studio Audit Trail</span>
+                                </h2>
+                                <p class="glass-card-desc">Immutable history of administrative actions, score
+                                    moderations, and registry changes</p>
+                            </div>
+                            <button type="button" id="btnRefreshAudit" class="btn btn-sm btn-secondary">Refresh
+                                Logs</button>
+                        </div>
+
+                        <div id="auditLogStatus" class="status-msg"></div>
+
+                        <div class="table-glass-wrap">
+                            <table class="glass-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 50px;">ID</th>
+                                        <th scope="col">Administrator</th>
+                                        <th scope="col">Action</th>
+                                        <th scope="col">Details</th>
+                                        <th scope="col">Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditLogBody">
+                                    <!-- Populated dynamically by app.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========================================================
+                     Panel 7: Studio API & Dynamic Configuration
+                     ======================================================== -->
+                <section id="panelStudioApi" class="window-panel hidden" aria-labelledby="studioApiHeading">
+                    <div class="two-column-grid">
+                        <!-- Server Constants Card -->
+                        <div class="glass-card">
+                            <div class="glass-card-header">
+                                <div>
+                                    <h2 id="studioApiHeading" class="glass-card-title">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <path
+                                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                                            </path>
+                                        </svg>
+                                        <span>Dynamic Studio Configuration</span>
+                                    </h2>
+                                    <p class="glass-card-desc">Zero hardcoded constants dynamically synchronized via GET
+                                        api/get-config.php</p>
+                                </div>
+                            </div>
+
+                            <div class="config-kv-list" id="configKvContainer">
+                                <div class="config-kv-row">
+                                    <span class="kv-key">Studio Application Title</span>
+                                    <span class="kv-val" id="cfgAppTitle">--</span>
+                                </div>
+                                <div class="config-kv-row">
+                                    <span class="kv-key">Allowed Limit Options</span>
+                                    <span class="kv-val num" id="cfgAllowedLimits">--</span>
+                                </div>
+                                <div class="config-kv-row">
+                                    <span class="kv-key">Valid Score Bounds</span>
+                                    <span class="kv-val num" id="cfgScoreBounds">--</span>
+                                </div>
+                                <div class="config-kv-row">
+                                    <span class="kv-key">Rate Limit Threshold</span>
+                                    <span class="kv-val num" id="cfgRateLimit">--</span>
+                                </div>
+                                <div class="config-kv-row">
+                                    <span class="kv-key">Max Direct Export Limit</span>
+                                    <span class="kv-val num" id="cfgMaxExport">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Studio API Secret Key Card -->
+                        <div class="glass-card">
+                            <div class="glass-card-header">
+                                <div>
+                                    <h2 class="glass-card-title">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="7.5" cy="15.5" r="5.5"></circle>
+                                            <path d="M21 2l-9.6 9.6"></path>
+                                            <path d="M15.5 7.5l3 3L22 7l-3-3"></path>
+                                        </svg>
+                                        <span>Game Client Secret Key</span>
+                                    </h2>
+                                    <p class="glass-card-desc">Allows authorized game engines to post verified scores
+                                        via X-API-Key</p>
+                                </div>
+                            </div>
+
+                            <div id="apiKeySection">
+                                <div id="apiKeyAdminContent" class="hidden">
+                                    <label class="field-label">Studio API Key (Header: X-API-Key)</label>
+                                    <div class="api-key-display-box">
+                                        <input type="password" id="apiSecretKeyInput" class="glass-input num" readonly
+                                            value="••••••••••••••••">
+                                        <button type="button" id="btnRevealApiKey" class="btn btn-sm btn-secondary">
+                                            <span id="revealApiKeyIcon" class="btn-icon">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                            </span>
+                                            <span id="revealApiKeyText">Reveal</span>
+                                        </button>
+                                        <button type="button" id="btnCopyApiKey" class="btn btn-sm btn-primary">
+                                            <span id="copyApiKeyIcon" class="btn-icon">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1">
+                                                    </path>
+                                                </svg>
+                                            </span>
+                                            <span id="copyApiKeyText">Copy</span>
+                                        </button>
+                                    </div>
+                                    <p class="field-hint" style="margin-top: 0.65rem;">Send this key in HTTP header
+                                        <code>X-API-Key</code> to bypass session cookie authentication for direct game
+                                        engine score submissions.
+                                    </p>
+                                </div>
+                                <div id="apiKeyGuestContent" class="auth-lock-card">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <h3>Administrator Access Required</h3>
+                                    <p>Sign in as administrator to inspect and copy the direct game engine API secret
+                                        key.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Endpoints Reference Table Card -->
+                    <div class="glass-card" style="margin-top: 1.5rem;">
+                        <div class="glass-card-header">
+                            <div>
+                                <h3 class="glass-card-title">REST API Endpoints Reference</h3>
+                                <p class="glass-card-desc">Contract specifications for game engine integration and
+                                    external integrations</p>
+                            </div>
+                        </div>
+
+                        <div class="table-glass-wrap">
+                            <table class="glass-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="width: 80px;">Method</th>
+                                        <th scope="col">Endpoint</th>
+                                        <th scope="col">Access Level</th>
+                                        <th scope="col">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-config.php</code></td>
+                                        <td>Public / Admin</td>
+                                        <td>Dynamic studio configuration, allowed limits, periods, and API endpoints
+                                            map.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-dashboard-stats.php</code></td>
+                                        <td>Public / Admin</td>
+                                        <td>Live telemetry KPIs (verified scores, players, pending count, top title, and
+                                            audit trail).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-scores.php</code></td>
+                                        <td>Public</td>
+                                        <td>Filtered verified leaderboard standings with search, timeframes, and
+                                            pagination.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-post">POST</span></td>
+                                        <td><code>api/post-score.php</code></td>
+                                        <td>User / X-API-Key</td>
+                                        <td>Score submission endpoint with rate-limiting and administrative queue
+                                            routing.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-rank.php</code></td>
+                                        <td>Public</td>
+                                        <td>Rank lookup for a player handle in a specific game.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-player-profile.php</code></td>
+                                        <td>Public</td>
+                                        <td>Deep player profile, per-game personal bests, and ranks via MySQL 8 window
+                                            functions.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-games.php</code></td>
+                                        <td>Public</td>
+                                        <td>Official active titles list and registry metadata.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-get">GET</span></td>
+                                        <td><code>api/get-chart-data.php</code></td>
+                                        <td>Public</td>
+                                        <td>Daily aggregated metrics for canvas score trajectory analytics.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-post">POST</span></td>
+                                        <td><code>api/admin-manage-games.php</code></td>
+                                        <td>Admin</td>
+                                        <td>Create new game titles or toggle active/inactive status with audit logging.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge-method badge-post">POST</span></td>
+                                        <td><code>api/admin-verify-score.php</code></td>
+                                        <td>Admin</td>
+                                        <td>Approve, reject, or batch moderate submitted scores with audit logging.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         Full-Screen Account & Authentication View (Option A)
+         ======================================================== -->
+    <div id="fullScreenAccountView" class="full-screen-account hidden" role="dialog" aria-modal="true"
+        aria-label="Competitor Account">
+        <!-- Top Navigation Bar -->
+        <header class="account-screen-nav">
+            <div class="account-screen-brand">
+                <div class="brand-crest brand-crest-sm" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                </div>
+                <span class="account-screen-title">Hyper Arena &bull; Competitor Account</span>
+            </div>
+            <button type="button" id="closeAccountScreenBtn" class="btn btn-sm btn-secondary"
+                title="Return to Dashboard (Esc)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Dashboard</span>
+            </button>
+        </header>
+
+        <!-- View Container -->
+        <div class="account-screen-body">
+            <!-- STATE A: Logged Out (Auth Card) -->
+            <div id="accountLoggedOutView" class="auth-card-container">
+                <div class="glass-card auth-glass-card">
+                    <div class="glass-card-header text-center" style="text-align: center; justify-content: center;">
+                        <div>
+                            <h2 class="glass-card-title">Competitor Authentication</h2>
+                            <p class="glass-card-desc">Sign in or create an account to record verified scores</p>
+                        </div>
+                    </div>
+
+                    <!-- Auth Mode Switcher -->
+                    <div class="admin-tabs" role="tablist" style="margin-bottom: 1.25rem;">
+                        <button type="button" id="tabLogin" class="admin-tab-btn active" role="tab"
+                            aria-selected="true">Sign In</button>
+                        <button type="button" id="tabRegister" class="admin-tab-btn" role="tab"
+                            aria-selected="false">Create Account</button>
+                    </div>
+
+                    <!-- Feedback message -->
+                    <div id="authFeedback" class="status-msg"></div>
+
+                    <!-- Demo Quick-Fill Bar -->
+                    <div class="demo-quick-fill-bar">
+                        <span class="demo-quick-fill-label">Demo:</span>
+                        <button type="button" class="demo-fill-btn" data-user="admin" data-pass="Admin123!">Fill Admin
+                            Demo</button>
+                        <button type="button" class="demo-fill-btn" data-user="player1" data-pass="Player123!">Fill
+                            Player Demo</button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" class="sidebar-form" novalidate>
+                        <div class="filter-field">
+                            <label for="loginUsername" class="field-label">Username</label>
+                            <input type="text" id="loginUsername" class="glass-input" placeholder="Enter username..."
+                                maxlength="50" autocomplete="username" required>
+                        </div>
+
+                        <div class="filter-field">
+                            <label for="loginPassword" class="field-label">Password</label>
+                            <input type="password" id="loginPassword" class="glass-input"
+                                placeholder="Enter password..." autocomplete="current-password" required>
+                        </div>
+
+                        <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block">Sign In</button>
+                    </form>
+
+                    <!-- Register Form -->
+                    <form id="registerForm" class="sidebar-form hidden" novalidate>
+                        <div class="filter-field">
+                            <label for="registerUsername" class="field-label">Username</label>
+                            <input type="text" id="registerUsername" class="glass-input"
+                                placeholder="Choose a handle (3-50 chars)..." maxlength="50" autocomplete="username"
+                                required>
+                        </div>
+
+                        <div class="filter-field">
+                            <label for="registerPassword" class="field-label">Password</label>
+                            <input type="password" id="registerPassword" class="glass-input"
+                                placeholder="Min 6 characters..." autocomplete="new-password" required>
+                        </div>
+
+                        <button type="submit" id="btnRegisterSubmit" class="btn btn-primary btn-block">Create
+                            Account</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- STATE B: Logged In (Full-Page Account Dashboard) -->
+            <div id="accountLoggedInView" class="account-dashboard-container hidden">
+                <!-- 1. Profile Header Glass Card -->
+                <div class="glass-card profile-banner-card">
+                    <div class="profile-banner-left">
+                        <div id="accProfileAvatar" class="acc-profile-avatar">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="profile-banner-meta">
+                            <div class="profile-banner-user-row">
+                                <h2 id="accProfileUsername" class="acc-profile-username">User</h2>
+                                <span id="accProfileRole" class="user-role-badge">PLAYER</span>
+                            </div>
+                            <p class="profile-banner-subtext">Active Competitor Session &bull; Verified Telemetry</p>
+                        </div>
+                    </div>
+                    <div class="profile-banner-actions">
+                        <button type="button" id="btnViewOwnProfile" class="btn btn-secondary">View Public
+                            Standing</button>
+                        <button type="button" id="logoutBtn" class="btn btn-danger">Log Out</button>
+                    </div>
+                </div>
+
+                <!-- 2. Personal Telemetry Strip (4 mini stat cards) -->
+                <div class="account-stats-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Approved Scores</span>
+                            <span id="accStatApproved" class="kpi-value num">0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Pending Review</span>
+                            <span id="accStatPending" class="kpi-value num">0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Rejected</span>
+                            <span id="accStatRejected" class="kpi-value num">0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Personal Best Score</span>
+                            <span id="accStatBest" class="kpi-value num">0</span>
                         </div>
                     </div>
                 </div>
 
-                <div id="leaderboardStatus" class="status-message" aria-live="polite"></div>
+                <!-- 3. My Recent Submissions Table -->
+                <div class="glass-card" style="margin-top: 1.5rem;">
+                    <div class="glass-card-header">
+                        <div>
+                            <h3 class="glass-card-title">My Recent Submissions</h3>
+                            <p class="glass-card-desc">Tracking personal match records and moderation status (last 15
+                                submissions)</p>
+                        </div>
+                    </div>
 
-                <div class="table-responsive">
-                    <table id="leaderboardTable" class="leaderboard-table">
+                    <div class="table-glass-wrap">
+                        <table class="glass-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Game</th>
+                                    <th scope="col" style="text-align: right;">Score</th>
+                                    <th scope="col" style="text-align: center;">Status</th>
+                                    <th scope="col">Submitted Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accSubmissionsBody">
+                                <!-- Populated dynamically by app.js strictly via textContent -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="accSubmissionsEmpty" class="empty-state hidden">
+                        <p>No score submissions recorded for this account yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         Player Mini-Profile Modal Dialog
+         ======================================================== -->
+    <div id="playerProfileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
+        aria-labelledby="modalPlayerName">
+        <div class="modal-dialog modal-dialog-lg">
+            <div class="modal-header">
+                <div class="profile-header-info">
+                    <div class="profile-avatar" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="modalPlayerName" class="modal-title">Player Profile</h3>
+                        <span id="modalPlayerFirstSeen" class="profile-meta-subtext">First seen: --</span>
+                    </div>
+                </div>
+                <button type="button" id="btnCloseProfileModal" class="btn-close-modal" aria-label="Close dialog">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="modalProfileStatus" class="status-msg"></div>
+
+            <div id="modalProfileContent">
+                <!-- Summary KPI Cards -->
+                <div class="profile-kpi-grid">
+                    <div class="profile-kpi-card">
+                        <span class="kpi-label">Approved Scores</span>
+                        <span id="modalPlayerSubmissions" class="kpi-value num">0</span>
+                    </div>
+                    <div class="profile-kpi-card">
+                        <span class="kpi-label">Highest Score Overall</span>
+                        <span id="modalPlayerHighest" class="kpi-value num">0</span>
+                    </div>
+                    <div class="profile-kpi-card">
+                        <span class="kpi-label">Last Active</span>
+                        <span id="modalPlayerLastSeen" class="kpi-value kpi-value-text">--</span>
+                    </div>
+                </div>
+
+                <!-- Per-Game Personal Bests & Window Ranks -->
+                <h4 class="profile-section-heading">Personal Bests &amp; Standings by Game</h4>
+                <div class="table-glass-wrap" style="margin-bottom: 1.25rem;">
+                    <table class="glass-table">
                         <thead>
                             <tr>
-                                <th scope="col" class="th-rank">Rank</th>
-                                <th scope="col" id="thGameCol" class="th-game">Game</th>
-                                <th scope="col" class="th-player">Player</th>
-                                <th scope="col" class="th-score">Score</th>
-                                <th scope="col" class="th-date">Date</th>
+                                <th scope="col">Game Title</th>
+                                <th scope="col" style="text-align: right;">Personal Best</th>
+                                <th scope="col" style="text-align: center;">Rank</th>
+                                <th scope="col" style="text-align: right;">Submissions</th>
                             </tr>
                         </thead>
-                        <tbody id="leaderboardBody">
-                            <!-- Populated dynamically by JavaScript using textContent -->
+                        <tbody id="modalPlayerGamesBody">
+                            <!-- Populated dynamically via textContent -->
                         </tbody>
                     </table>
                 </div>
 
-                <div id="emptyState" class="empty-state hidden">
-                    <p id="emptyStateText">No approved scores match your selected filters.</p>
+                <!-- Recent Submissions -->
+                <h4 class="profile-section-heading">Recent Verified Matches</h4>
+                <div class="table-glass-wrap">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Game</th>
+                                <th scope="col" style="text-align: right;">Score</th>
+                                <th scope="col">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalPlayerRecentBody">
+                            <!-- Populated dynamically via textContent -->
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Player Rank Lookup Tool -->
-                <div class="rank-lookup-card">
-                    <h3 class="rank-lookup-title">🔍 Check Individual Player Rank</h3>
-                    <form id="rankForm" class="rank-form" novalidate>
-                        <div class="rank-input-group">
-                            <input 
-                                type="text" 
-                                id="rankPlayerInput" 
-                                class="form-input" 
-                                placeholder="Enter exact player username (e.g. AcePilot)" 
-                                maxlength="100" 
-                                autocomplete="off" 
-                                required
-                            >
-                            <button type="submit" id="rankBtn" class="btn btn-secondary">
-                                <span class="rank-btn-text">Find Rank</span>
-                            </button>
-                        </div>
-                    </form>
-                    <div id="rankResult" class="rank-result hidden" aria-live="polite"></div>
-                </div>
-            </section>
-
-            <!-- Score Analytics & Trends Chart Section -->
-            <section id="analyticsSection" class="card chart-card" aria-labelledby="chartHeading">
-                <div class="card-header chart-card-header">
-                    <div>
-                        <h2 id="chartHeading" class="card-title">📈 Scores Over Time Analytics</h2>
-                        <p class="card-desc">Interactive daily score trends and submission activity</p>
-                    </div>
-                    <div class="chart-controls">
-                        <!-- Metric Selector -->
-                        <div class="chart-control-field">
-                            <label for="chartMetricSelect" class="sr-only">Metric</label>
-                            <select id="chartMetricSelect" class="form-input chart-select">
-                                <option value="highest_score" selected>Highest Score</option>
-                                <option value="average_score">Average Score</option>
-                                <option value="total_submissions">Total Submissions</option>
-                            </select>
-                        </div>
-                        <!-- Timeframe Selector -->
-                        <div class="chart-timeframe-group" role="group" aria-label="Chart timeframe">
-                            <button type="button" class="chart-days-btn" data-days="7">7D</button>
-                            <button type="button" class="chart-days-btn active" data-days="30">30D</button>
-                            <button type="button" class="chart-days-btn" data-days="90">90D</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="chart-canvas-container">
-                    <canvas id="scoreChart" width="800" height="260"></canvas>
-                </div>
-                <div class="chart-footer">
-                    <span id="chartStatus" class="chart-status-text">Loading chart analytics...</span>
-                    <span class="chart-legend-indicator">💡 Hover over data points for snapshot details</span>
-                </div>
-            </section>
-
-            <!-- Submit Score Section -->
-            <section class="card form-card" aria-labelledby="formHeading">
-                <div class="card-header">
-                    <h2 id="formHeading" class="card-title">Submit a Score</h2>
-                    <p class="card-desc">Compete for the top rankings on verified leaderboards</p>
-                </div>
-
-                <div id="formFeedback" class="form-feedback hidden" role="alert" aria-live="polite"></div>
-
-                <!-- Unauthenticated Notice -->
-                <div id="authRequiredBox" class="auth-required-box hidden">
-                    <div class="lock-icon">🔒</div>
-                    <h3>Authentication Required</h3>
-                    <p>You must log in to submit a verified score to the leaderboard.</p>
-                    <button type="button" id="btnPromptAuth" class="btn btn-primary" style="margin-top: 0.75rem;">Log In / Create Account</button>
-                </div>
-
-                <!-- Authenticated Score Form -->
-                <form id="scoreForm" class="score-form" novalidate>
-                    <div class="user-submit-badge">
-                        <span>Submitting as:</span>
-                        <strong id="submitUserLabel">Guest</strong>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="formGameInput" class="form-label">Game</label>
-                        <input 
-                            type="text" 
-                            id="formGameInput" 
-                            name="game" 
-                            class="form-input" 
-                            list="gamesDatalist" 
-                            placeholder="Select or type game name" 
-                            maxlength="100" 
-                            autocomplete="off" 
-                            required
-                        >
-                        <datalist id="gamesDatalist"></datalist>
-                        <small class="form-hint">Pick an existing game or enter a new title</small>
-                    </div>
-
-                    <!-- Admin Only custom player name override -->
-                    <div id="adminPlayerNameGroup" class="form-group hidden">
-                        <label for="playerNameOverrideInput" class="form-label">Custom Player Name (Admin Override)</label>
-                        <input 
-                            type="text" 
-                            id="playerNameOverrideInput" 
-                            name="player_name" 
-                            class="form-input" 
-                            placeholder="Leave blank to use admin username" 
-                            maxlength="100" 
-                            autocomplete="off"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="scoreInput" class="form-label">Score</label>
-                        <input 
-                            type="number" 
-                            id="scoreInput" 
-                            name="score" 
-                            class="form-input" 
-                            min="0" 
-                            max="2147483647" 
-                            step="1" 
-                            placeholder="e.g. 9850" 
-                            required
-                        >
-                        <small class="form-hint">Whole number between 0 and 2,147,483,647</small>
-                    </div>
-
-                    <button type="submit" id="submitBtn" class="btn btn-primary">
-                        <span class="btn-text">Submit Score for Verification</span>
-                    </button>
-                </form>
-            </section>
-        </div>
-    </main>
-
-    <!-- Authentication Modal -->
-    <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
-        <div class="modal-card">
-            <button type="button" id="btnCloseAuthModal" class="modal-close-btn" aria-label="Close dialog">&times;</button>
-
-            <div class="modal-tabs">
-                <button type="button" id="tabLogin" class="modal-tab active">Log In</button>
-                <button type="button" id="tabRegister" class="modal-tab">Create Account</button>
             </div>
-
-            <div id="authModalFeedback" class="form-feedback hidden" role="alert"></div>
-
-            <!-- Login Form -->
-            <form id="loginForm" class="auth-form" novalidate>
-                <h3 id="authModalTitle" class="sr-only">User Login</h3>
-                <div class="form-group">
-                    <label for="loginUsername" class="form-label">Username</label>
-                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter username" autocomplete="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword" class="form-label">Password</label>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
-                </div>
-                <button type="submit" id="btnLoginSubmit" class="btn btn-primary" style="width: 100%;">
-                    <span>Log In</span>
-                </button>
-            </form>
-
-            <!-- Register Form -->
-            <form id="registerForm" class="auth-form hidden" novalidate>
-                <div class="form-group">
-                    <label for="registerUsername" class="form-label">Username (3–50 chars, alphanumeric)</label>
-                    <input type="text" id="registerUsername" class="form-input" placeholder="Choose a username" autocomplete="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerPassword" class="form-label">Password (Min. 6 chars)</label>
-                    <input type="password" id="registerPassword" class="form-input" placeholder="Create a password" autocomplete="new-password" required>
-                </div>
-                <button type="submit" id="btnRegisterSubmit" class="btn btn-primary" style="width: 100%;">
-                    <span>Create Player Account</span>
-                </button>
-            </form>
         </div>
     </div>
-
-    <footer class="app-footer">
-        <p>Option A: Game Leaderboard Platform &bull; HTML5 &bull; CSS3 &bull; Vanilla JS &bull; PHP &bull; MySQL &bull; <a href="test-simulator.html" class="footer-link">Test Simulator</a></p>
-    </footer>
 </body>
+
 </html>

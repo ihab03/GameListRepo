@@ -61,6 +61,15 @@ try {
             ]);
         }
 
+        // Audit log action
+        logAdminAction(
+            $pdo,
+            $admin,
+            "{$action}_score",
+            $scoreId,
+            "Marked score #{$scoreId} as {$newStatus}"
+        );
+
         sendJsonResponse(200, [
             'status'        => 'success',
             'message'       => "Score #{$scoreId} was successfully marked as {$newStatus}.",
@@ -84,6 +93,15 @@ try {
         ]);
 
         $affectedCount = $stmt->rowCount();
+
+        // Audit log action
+        logAdminAction(
+            $pdo,
+            $admin,
+            $action,
+            null,
+            "Bulk marked {$affectedCount} pending score(s) as {$newStatus}"
+        );
 
         sendJsonResponse(200, [
             'status'        => 'success',

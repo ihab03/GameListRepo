@@ -1,0 +1,179 @@
+/**
+ * Hyper Arena - Theme Variables & Typography Reset
+ * 
+ * Centralizes CSS custom properties for Dark and Light frosted glass themes,
+ * system font definitions, layout box-sizing resets, and tabular numeric figures.
+ */
+:root,
+[data-theme="dark"] {
+    /* Pure carbon neutral background with a subtle top-left studio light falloff */
+    --bg-mesh: radial-gradient(circle at 15% 0%, #16181d 0%, #090a0d 75%);
+    --bg-page: #090a0d;
+
+    /* Crisp smoked-glass surfaces without muddy blue undertones */
+    --glass-bg: rgba(18, 20, 24, 0.78);
+    --glass-bg-subtle: rgba(18, 20, 24, 0.52);
+    --glass-bg-elevated: rgba(26, 29, 36, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.07);
+    --glass-border-subtle: rgba(255, 255, 255, 0.035);
+    --glass-border-focus: rgba(16, 185, 129, 0.55);
+    --glass-blur: blur(20px);
+    --glass-blur-sm: blur(12px);
+
+    /* High-contrast neutral zinc typography */
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+
+    /* Tactical studio emerald & teal accents (no AI indigo/purple) */
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --accent-cyan: #14b8a6;
+    --accent-glow: rgba(16, 185, 129, 0.18);
+
+    --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    --glass-shadow-sm: 0 4px 14px -2px rgba(0, 0, 0, 0.35);
+    --glass-shadow-lg: 0 20px 48px -8px rgba(0, 0, 0, 0.65);
+
+    --table-stripe: rgba(255, 255, 255, 0.012);
+    --table-hover: rgba(255, 255, 255, 0.035);
+
+    /* Muted metallic podium tones */
+    --rank-gold: #eab308;
+    --rank-gold-border: rgba(234, 179, 8, 0.35);
+    --rank-gold-bg: rgba(234, 179, 8, 0.08);
+
+    --rank-silver: #d4d4d8;
+    --rank-silver-border: rgba(212, 212, 216, 0.3);
+    --rank-silver-bg: rgba(212, 212, 216, 0.07);
+
+    --rank-bronze: #d97706;
+    --rank-bronze-border: rgba(217, 119, 6, 0.35);
+    --rank-bronze-bg: rgba(217, 119, 6, 0.08);
+
+    /* Refined semantic status pills */
+    --badge-approved-bg: rgba(16, 185, 129, 0.1);
+    --badge-approved-border: rgba(16, 185, 129, 0.3);
+    --badge-approved-text: #6ee7b7;
+
+    --badge-pending-bg: rgba(245, 158, 11, 0.1);
+    --badge-pending-border: rgba(245, 158, 11, 0.3);
+    --badge-pending-text: #fcd34d;
+
+    --badge-rejected-bg: rgba(244, 63, 94, 0.1);
+    --badge-rejected-border: rgba(244, 63, 94, 0.3);
+    --badge-rejected-text: #fda4af;
+
+    --modal-overlay: rgba(5, 6, 8, 0.78);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-pill: 9999px;
+    --transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] {
+    /* Warm architectural stone & pure white surfaces (no baby-blue tint) */
+    --bg-mesh: radial-gradient(circle at 15% 0%, #ffffff 0%, #f4f4f5 80%);
+    --bg-page: #f4f4f5;
+
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-bg-subtle: rgba(255, 255, 255, 0.65);
+    --glass-bg-elevated: #ffffff;
+    --glass-border: rgba(24, 24, 27, 0.08);
+    --glass-border-subtle: rgba(24, 24, 27, 0.04);
+    --glass-border-focus: rgba(5, 150, 105, 0.55);
+    --glass-blur: blur(20px);
+    --glass-blur-sm: blur(12px);
+
+    /* Crisp zinc ink colors */
+    --text-primary: #09090b;
+    --text-secondary: #52525b;
+    --text-muted: #71717a;
+
+    /* Deep forest emerald accent for sharp contrast on light glass */
+    --accent: #059669;
+    --accent-hover: #047857;
+    --accent-cyan: #0d9488;
+    --accent-glow: rgba(5, 150, 105, 0.14);
+
+    --glass-shadow: 0 8px 24px -4px rgba(9, 9, 11, 0.05);
+    --glass-shadow-sm: 0 2px 8px -1px rgba(9, 9, 11, 0.04);
+    --glass-shadow-lg: 0 16px 40px -6px rgba(9, 9, 11, 0.08);
+
+    --table-stripe: rgba(24, 24, 27, 0.015);
+    --table-hover: rgba(24, 24, 27, 0.035);
+
+    --rank-gold: #a16207;
+    --rank-gold-border: rgba(161, 98, 7, 0.35);
+    --rank-gold-bg: rgba(234, 179, 8, 0.12);
+
+    --rank-silver: #3f3f46;
+    --rank-silver-border: rgba(63, 63, 70, 0.3);
+    --rank-silver-bg: rgba(161, 161, 170, 0.14);
+
+    --rank-bronze: #9a3412;
+    --rank-bronze-border: rgba(154, 52, 18, 0.35);
+    --rank-bronze-bg: rgba(217, 119, 6, 0.12);
+
+    --badge-approved-bg: rgba(5, 150, 105, 0.1);
+    --badge-approved-border: rgba(5, 150, 105, 0.3);
+    --badge-approved-text: #065f46;
+
+    --badge-pending-bg: rgba(217, 119, 6, 0.1);
+    --badge-pending-border: rgba(217, 119, 6, 0.3);
+    --badge-pending-text: #92400e;
+
+    --badge-rejected-bg: rgba(225, 29, 72, 0.08);
+    --badge-rejected-border: rgba(225, 29, 72, 0.28);
+    --badge-rejected-text: #9f1239;
+
+    --modal-overlay: rgba(9, 9, 11, 0.45);
+}
+
+/* ==========================================================================
+   Base & Reset
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    color-scheme: dark;
+}
+
+[data-theme="light"] {
+    color-scheme: light;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg-mesh) no-repeat fixed;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.55;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular figures for numerical precision */
+.num,
+.th-score,
+.td-score,
+.th-rank,
+.td-rank,
+.td-date,
+.rank-badge,
+.metric-value,
+.stat-value {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}

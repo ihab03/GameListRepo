@@ -1,13 +1,18 @@
 /**
- * Leaderboard Traffic & Stress Simulator Client
+ * Game Leaderboard Platform - Traffic & Stress Simulator Controller
  * 
- * Generates automated high-volume score traffic and tests invalid edge-cases.
- * Strictly adheres to DOM textContent manipulation for XSS security.
+ * Automates high-volume score generation, concurrency testing, and security edge-case runs.
+ * Strictly adheres to DOM textContent manipulation for XSS immunity. Zero emojis.
  */
 
 'use strict';
 
-// DOM Element References
+const SVG_ICONS = {
+    sun: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    moon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+};
+
+// DOM References
 let simGameSelect = null;
 let simBatchCount = null;
 let btnStartBatch = null;
@@ -39,7 +44,6 @@ let latencyCount = 0;
 let requestCounter = 0;
 let currentSessionUser = null;
 
-// Random Generation Word Lists
 const NAME_PREFIXES = [
     'Cyber', 'Shadow', 'Apex', 'Turbo', 'Retro', 'Nova', 'Pixel', 
     'Hyper', 'Vortex', 'Blaze', 'Quantum', 'Cosmic', 'Solar', 'Echo'
@@ -51,9 +55,34 @@ const NAME_SUFFIXES = [
 ];
 
 /**
- * Initializes DOM element bindings, checks session, and loads available games.
+ * Initializes DOM elements and loads state.
  */
 function initSimulator() {
+    bindSimulatorElements();
+    initTheme();
+
+    if (chkUseApiKey) {
+        chkUseApiKey.addEventListener('change', updateSimulatorAuthStatus);
+    }
+
+    if (btnStartBatch) {
+        btnStartBatch.addEventListener('click', handleStartRandomBatch);
+    }
+    if (btnRunEdgeCases) {
+        btnRunEdgeCases.addEventListener('click', handleRunEdgeCaseBattery);
+    }
+    if (btnStop) {
+        btnStop.addEventListener('click', handleStopSimulator);
+    }
+    if (btnClearLog) {
+        btnClearLog.addEventListener('click', handleClearLog);
+    }
+
+    checkSimulatorSession();
+    fetchAvailableGames();
+}
+
+function bindSimulatorElements() {
     simGameSelect = document.getElementById('simGameSelect');
     simBatchCount = document.getElementById('simBatchCount');
     btnStartBatch = document.getElementById('btnStartBatch');
@@ -72,30 +101,9 @@ function initSimulator() {
     simUserSession = document.getElementById('simUserSession');
     chkUseApiKey = document.getElementById('chkUseApiKey');
 
-    // Theme initialization
-    initTheme();
-
-    if (chkUseApiKey) {
-        chkUseApiKey.addEventListener('change', updateSimulatorAuthStatus);
-    }
-
-    // Attach Event Listeners
-    if (btnStartBatch) {
-        btnStartBatch.addEventListener('click', handleStartRandomBatch);
-    }
-    if (btnRunEdgeCases) {
-        btnRunEdgeCases.addEventListener('click', handleRunEdgeCaseBattery);
-    }
-    if (btnStop) {
-        btnStop.addEventListener('click', handleStopSimulator);
-    }
-    if (btnClearLog) {
-        btnClearLog.addEventListener('click', handleClearLog);
-    }
-
-    // Check session & populate games
-    checkSimulatorSession();
-    fetchAvailableGames();
+    themeToggle = document.getElementById('themeToggle');
+    themeToggleIcon = document.getElementById('themeToggleIcon');
+    themeToggleText = document.getElementById('themeToggleText');
 }
 
 /**
@@ -113,31 +121,32 @@ async function checkSimulatorSession() {
         }
         updateSimulatorAuthStatus();
     } catch (err) {
-        console.error('Session check failed:', err);
+        currentSessionUser = null;
+        updateSimulatorAuthStatus();
     }
 }
 
 /**
- * Updates simulator badge based on active session and API key setting.
+ * Updates simulator session indicator without emojis.
  */
 function updateSimulatorAuthStatus() {
     const isApiKeyEnabled = chkUseApiKey && chkUseApiKey.checked;
 
     if (currentSessionUser) {
         if (simUserSession) {
-            simUserSession.textContent = `${currentSessionUser.username} (${currentSessionUser.role.toUpperCase()})`;
-            simUserSession.style.color = currentSessionUser.role === 'admin' ? '#fbbf24' : '#93c5fd';
+            simUserSession.textContent = `${currentSessionUser.username} [${currentSessionUser.role.toUpperCase()}]`;
+            simUserSession.style.color = currentSessionUser.role === 'admin' ? '#f59e0b' : '#38bdf8';
         }
         if (simAuthNotice) simAuthNotice.classList.add('hidden');
     } else if (isApiKeyEnabled) {
         if (simUserSession) {
-            simUserSession.textContent = 'Secret API Key (Direct Server Authorization)';
+            simUserSession.textContent = 'Secret API Key [Direct Server Authorization]';
             simUserSession.style.color = '#34d399';
         }
         if (simAuthNotice) simAuthNotice.classList.add('hidden');
     } else {
         if (simUserSession) {
-            simUserSession.textContent = 'Unauthenticated (Requests will return 401)';
+            simUserSession.textContent = 'Unauthenticated [Requests will return 401]';
             simUserSession.style.color = '#f87171';
         }
         if (simAuthNotice) simAuthNotice.classList.remove('hidden');
@@ -148,10 +157,6 @@ function updateSimulatorAuthStatus() {
  * Initializes theme based on localStorage.
  */
 function initTheme() {
-    themeToggle = document.getElementById('themeToggle');
-    themeToggleIcon = document.getElementById('themeToggleIcon');
-    themeToggleText = document.getElementById('themeToggleText');
-
     let savedTheme = 'dark';
     try {
         savedTheme = localStorage.getItem('theme') || 'dark';
@@ -170,8 +175,12 @@ function applyTheme(theme) {
     const isDark = theme !== 'light';
     const activeTheme = isDark ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', activeTheme);
-    if (themeToggleIcon) themeToggleIcon.textContent = isDark ? '☀️' : '🌙';
-    if (themeToggleText) themeToggleText.textContent = isDark ? 'Light' : 'Dark';
+    if (themeToggleIcon) {
+        themeToggleIcon.innerHTML = isDark ? SVG_ICONS.moon : SVG_ICONS.sun;
+    }
+    if (themeToggleText) {
+        themeToggleText.textContent = isDark ? 'Dark' : 'Light';
+    }
 }
 
 function toggleTheme() {
@@ -194,7 +203,10 @@ async function fetchAvailableGames() {
         if (response.ok && data.status === 'success' && Array.isArray(data.games)) {
             availableGames = data.games;
             if (simGameSelect) {
-                data.games.forEach((game) => {
+                while (simGameSelect.options.length > 1) {
+                    simGameSelect.remove(1);
+                }
+                availableGames.forEach((game) => {
                     const opt = document.createElement('option');
                     opt.value = game;
                     opt.textContent = game;
@@ -202,38 +214,69 @@ async function fetchAvailableGames() {
                 });
             }
         }
-    } catch (err) {
-        console.error('Failed to load games in simulator:', err);
-    }
+    } catch (err) {}
 }
 
 /**
- * Starts generating and submitting random scores.
+ * Generates a random alphanumeric player handle.
+ */
+function generateRandomPlayerName() {
+    const prefix = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
+    const suffix = NAME_SUFFIXES[Math.floor(Math.random() * NAME_SUFFIXES.length)];
+    const num = Math.floor(Math.random() * 900) + 100;
+    return `${prefix}${suffix}${num}`;
+}
+
+/**
+ * Generates a realistic score with nice distribution.
+ */
+function generateRandomScore() {
+    const tier = Math.random();
+    if (tier < 0.15) {
+        return Math.floor(Math.random() * 2000) + 500;
+    }
+    if (tier < 0.65) {
+        return Math.floor(Math.random() * 15000) + 2000;
+    }
+    if (tier < 0.90) {
+        return Math.floor(Math.random() * 75000) + 15000;
+    }
+    return Math.floor(Math.random() * 450000) + 75000;
+}
+
+/**
+ * Launches an automated batch of randomized score submissions.
  */
 async function handleStartRandomBatch() {
-    if (isRunning) {
-        return;
-    }
+    if (isRunning) return;
 
-    const totalToSend = Math.max(1, Math.min(500, parseInt(simBatchCount.value, 10) || 100));
-    resetMetrics(totalToSend);
+    const countInput = simBatchCount ? parseInt(simBatchCount.value, 10) : 100;
+    const totalRequests = isNaN(countInput) || countInput <= 0 ? 100 : Math.min(500, countInput);
+
+    const selectedTarget = simGameSelect ? simGameSelect.value : '__RANDOM__';
+    const gamePool = availableGames.length > 0 ? availableGames : ['Space Blaster', 'Dungeon Runner', 'Drift King'];
+
     setSimulatorRunningState(true);
-    setStatus('Dispatching automated score submissions...', 'loading');
+    resetMetrics(totalRequests);
+    setStatus(`Dispatching ${totalRequests} score submissions...`, 'running');
 
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 1; i <= totalToSend; i++) {
+    for (let i = 1; i <= totalRequests; i++) {
         if (shouldStop) {
-            setStatus(`Stopped by user after ${i - 1} submissions.`, 'error');
+            setStatus(`Batch stopped by operator at #${i - 1} submissions.`, 'warning');
             break;
         }
 
-        const targetGame = getSelectedGameOrRandom();
-        const randomPlayer = generateRandomPlayerName();
-        const randomScore = Math.floor(Math.random() * 950000) + 100;
+        const game = selectedTarget === '__RANDOM__'
+            ? gamePool[Math.floor(Math.random() * gamePool.length)]
+            : selectedTarget;
 
-        const result = await postScoreToApi(targetGame, randomPlayer, randomScore);
+        const player = generateRandomPlayerName();
+        const score = generateRandomScore();
+
+        const result = await postScoreToApi(game, player, score);
 
         if (result.status === 201) {
             successCount++;
@@ -241,124 +284,56 @@ async function handleStartRandomBatch() {
             errorCount++;
         }
 
-        updateMetricsDisplay(i, totalToSend, successCount, errorCount, result.latency);
-        appendLogRow(i, targetGame, randomPlayer, randomScore, result.status, result.message);
+        updateMetrics(i, totalRequests, successCount, errorCount, result.latency);
+        appendLogRow(i, game, player, score, result.status, result.message, result.latency);
 
-        // Small delay to keep browser thread fluid and allow UI paint
-        await new Promise((resolve) => setTimeout(resolve, 30));
+        // Small interval to simulate network traffic
+        await new Promise((resolve) => setTimeout(resolve, 40));
     }
 
     if (!shouldStop) {
-        setStatus(`Batch completed! ${successCount} scores submitted (now pending in Admin Queue).`, 'success');
+        setStatus(`Batch completed. ${successCount} saved, ${errorCount} errors.`, 'success');
     }
 
     setSimulatorRunningState(false);
 }
 
 /**
- * Runs a battery of out-of-range, invalid, and negative inputs.
+ * Dispatches an automated battery of invalid and edge-case inputs.
  */
 async function handleRunEdgeCaseBattery() {
-    if (isRunning) {
-        return;
-    }
+    if (isRunning) return;
 
-    const testBattery = [
-        {
-            label: 'Out-of-range integer (MAX + 1)',
-            game: 'Space Blaster',
-            player: 'OutMaxInt',
-            score: 2147483648
-        },
-        {
-            label: 'Huge numeric string (>32-bit)',
-            game: 'Space Blaster',
-            player: 'HugeNumStr',
-            score: '999999999999999999999999'
-        },
-        {
-            label: 'Negative integer (-1)',
-            game: 'Space Blaster',
-            player: 'NegInt',
-            score: -1
-        },
-        {
-            label: 'Negative string ("-50")',
-            game: 'Space Blaster',
-            player: 'NegStr',
-            score: '-50'
-        },
-        {
-            label: 'Non-numeric string ("abc")',
-            game: 'Space Blaster',
-            player: 'AlphaScore',
-            score: 'abc'
-        },
-        {
-            label: 'String with unit suffix ("100px")',
-            game: 'Space Blaster',
-            player: 'UnitScore',
-            score: '100px'
-        },
-        {
-            label: 'Decimal/Float literal (12.34)',
-            game: 'Space Blaster',
-            player: 'FloatLit',
-            score: 12.34
-        },
-        {
-            label: 'Decimal/Float string ("12.34")',
-            game: 'Space Blaster',
-            player: 'FloatStr',
-            score: '12.34'
-        },
-        {
-            label: 'Missing player name',
-            game: 'Space Blaster',
-            player: '   ',
-            score: 500
-        },
-        {
-            label: 'Whitespace game name',
-            game: '   ',
-            player: 'ValidPlayer',
-            score: 500
-        },
-        {
-            label: 'Oversized player name (101 chars)',
-            game: 'Space Blaster',
-            player: 'P'.repeat(101),
-            score: 500
-        },
-        {
-            label: 'Valid Boundary Score (MAX_SCORE 2147483647)',
-            game: 'Space Blaster',
-            player: 'ValidMaxPlayer',
-            score: 2147483647
-        },
-        {
-            label: 'Valid Boundary Score (Zero 0)',
-            game: 'Space Blaster',
-            player: 'ValidZeroPlayer',
-            score: 0
-        }
+    setSimulatorRunningState(true);
+
+    const edgeCases = [
+        { label: 'Negative score (-1)', game: 'Space Blaster', player: 'NegativeTester', score: -1, expectStatus: 400 },
+        { label: 'String negative ("-50")', game: 'Space Blaster', player: 'StringNegTester', score: '-50', expectStatus: 400 },
+        { label: 'Alpha score ("abc")', game: 'Space Blaster', player: 'AlphaTester', score: 'abc', expectStatus: 400 },
+        { label: 'Float score (12.34)', game: 'Space Blaster', player: 'FloatTester', score: 12.34, expectStatus: 400 },
+        { label: 'Null score', game: 'Space Blaster', player: 'NullTester', score: null, expectStatus: 400 },
+        { label: 'Boolean score (true)', game: 'Space Blaster', player: 'BoolTester', score: true, expectStatus: 400 },
+        { label: 'Array score ([100])', game: 'Space Blaster', player: 'ArrayTester', score: [100], expectStatus: 400 },
+        { label: '32-bit INT overflow (2147483648)', game: 'Space Blaster', player: 'OverflowTester', score: 2147483648, expectStatus: 400 },
+        { label: 'Gigantic string overflow ("999999999999999")', game: 'Space Blaster', player: 'GiganticTester', score: '999999999999999', expectStatus: 400 },
+        { label: 'Whitespace player ("   ")', game: 'Space Blaster', player: '   ', score: 5000, expectStatus: 400 },
+        { label: 'Whitespace game ("   ")', game: '   ', player: 'ValidPlayer', score: 5000, expectStatus: 400 },
+        { label: 'Valid Zero score (0)', game: 'Space Blaster', player: 'ZeroTester', score: 0, expectStatus: 201 },
+        { label: 'Max 32-bit bound (2147483647)', game: 'Space Blaster', player: 'MaxBoundTester', score: 2147483647, expectStatus: 201 },
     ];
 
-    resetMetrics(testBattery.length);
-    setSimulatorRunningState(true);
-    setStatus('Running edge-case & validation battery...', 'loading');
+    const totalRequests = edgeCases.length;
+    resetMetrics(totalRequests);
+    setStatus(`Executing ${totalRequests} validation edge-cases...`, 'running');
 
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < testBattery.length; i++) {
-        if (shouldStop) {
-            setStatus('Edge-case battery interrupted.', 'error');
-            break;
-        }
+    for (let i = 0; i < edgeCases.length; i++) {
+        if (shouldStop) break;
 
-        const testCase = testBattery[i];
-        const result = await postScoreToApi(testCase.game, testCase.player, testCase.score);
+        const tc = edgeCases[i];
+        const result = await postScoreToApi(tc.game, tc.player, tc.score);
 
         if (result.status === 201) {
             successCount++;
@@ -366,33 +341,29 @@ async function handleRunEdgeCaseBattery() {
             errorCount++;
         }
 
-        updateMetricsDisplay(i + 1, testBattery.length, successCount, errorCount, result.latency);
+        updateMetrics(i + 1, totalRequests, successCount, errorCount, result.latency);
         appendLogRow(
             i + 1,
-            testCase.game,
-            `${testCase.player} (${testCase.label})`,
-            testCase.score,
+            tc.game,
+            tc.player,
+            typeof tc.score === 'object' ? JSON.stringify(tc.score) : String(tc.score),
             result.status,
-            result.message
+            `[${tc.label}] ${result.message}`,
+            result.latency
         );
 
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 60));
     }
 
     if (!shouldStop) {
-        setStatus(`Edge-case battery complete. Error cases were correctly rejected.`, 'success');
+        setStatus(`Edge-case battery complete. Error cases were correctly validated.`, 'success');
     }
 
     setSimulatorRunningState(false);
 }
 
 /**
- * Submits a score payload to POST api/post-score.php and measures response latency.
- *
- * @param {string} game
- * @param {string} player
- * @param {any} score
- * @return {Promise<{status: number, message: string, latency: number}>}
+ * Submits a score payload to POST api/post-score.php and measures latency.
  */
 async function postScoreToApi(game, player, score) {
     const startTime = performance.now();
@@ -410,8 +381,9 @@ async function postScoreToApi(game, player, score) {
         const headers = {
             'Content-Type': 'application/json'
         };
+
         if (chkUseApiKey && chkUseApiKey.checked) {
-            headers['X-API-Key'] = 'wolves-secret-key-2026';
+            headers['X-API-Key'] = 'hyper-arena-secret-key-2026';
         }
 
         const response = await fetch('api/post-score.php', {
@@ -442,10 +414,8 @@ async function postScoreToApi(game, player, score) {
 /**
  * Appends a row to the live simulation log table strictly using textContent.
  */
-function appendLogRow(index, game, player, score, statusCode, responseMessage) {
-    if (!simLogBody) {
-        return;
-    }
+function appendLogRow(index, game, player, score, statusCode, responseMessage, latency) {
+    if (!simLogBody) return;
 
     if (requestCounter === 0) {
         simLogBody.replaceChildren();
@@ -455,9 +425,11 @@ function appendLogRow(index, game, player, score, statusCode, responseMessage) {
     const row = document.createElement('tr');
 
     const tdIndex = document.createElement('td');
+    tdIndex.className = 'num';
     tdIndex.textContent = String(index);
 
     const tdTime = document.createElement('td');
+    tdTime.className = 'td-date';
     const now = new Date();
     tdTime.textContent = now.toTimeString().split(' ')[0];
 
@@ -465,22 +437,32 @@ function appendLogRow(index, game, player, score, statusCode, responseMessage) {
     tdGame.textContent = game;
 
     const tdPlayer = document.createElement('td');
+    tdPlayer.className = 'td-player';
     tdPlayer.textContent = player;
 
     const tdScore = document.createElement('td');
-    tdScore.style.textAlign = 'right';
-    const num = Number(score);
-    tdScore.textContent = Number.isFinite(num) ? num.toLocaleString() : String(score);
+    tdScore.className = 'td-score';
+    tdScore.textContent = typeof score === 'number' ? score.toLocaleString() : String(score);
 
     const tdStatus = document.createElement('td');
     tdStatus.style.textAlign = 'center';
-    const badge = document.createElement('span');
-    badge.className = `badge-status badge-${statusCode}`;
-    badge.textContent = statusCode === 0 ? 'ERR' : String(statusCode);
-    tdStatus.appendChild(badge);
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `status-badge ${statusCode === 201 ? 'badge-approved' : (statusCode === 429 ? 'badge-pending' : 'badge-rejected')}`;
+    statusBadge.textContent = String(statusCode);
+    tdStatus.appendChild(statusBadge);
 
     const tdMessage = document.createElement('td');
+    tdMessage.style.maxWidth = '260px';
+    tdMessage.style.overflow = 'hidden';
+    tdMessage.style.textOverflow = 'ellipsis';
+    tdMessage.style.whiteSpace = 'nowrap';
     tdMessage.textContent = responseMessage;
+
+    const tdLatency = document.createElement('td');
+    tdLatency.className = 'num';
+    tdLatency.style.textAlign = 'right';
+    tdLatency.style.color = latency > 120 ? '#f87171' : 'var(--text-secondary)';
+    tdLatency.textContent = `${latency} ms`;
 
     row.appendChild(tdIndex);
     row.appendChild(tdTime);
@@ -489,36 +471,17 @@ function appendLogRow(index, game, player, score, statusCode, responseMessage) {
     row.appendChild(tdScore);
     row.appendChild(tdStatus);
     row.appendChild(tdMessage);
+    row.appendChild(tdLatency);
 
-    simLogBody.appendChild(row);
+    simLogBody.insertBefore(row, simLogBody.firstChild);
 
-    const scrollContainer = simLogBody.closest('.log-scroll-wrapper');
-    if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    // Cap log at 150 rows
+    while (simLogBody.children.length > 150) {
+        simLogBody.removeChild(simLogBody.lastChild);
     }
 }
 
-function generateRandomPlayerName() {
-    const prefix = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
-    const suffix = NAME_SUFFIXES[Math.floor(Math.random() * NAME_SUFFIXES.length)];
-    const num = Math.floor(Math.random() * 99) + 1;
-    return `${prefix}${suffix}_${num}`;
-}
-
-function getSelectedGameOrRandom() {
-    const chosen = simGameSelect ? simGameSelect.value : '__RANDOM__';
-    if (chosen !== '__RANDOM__') {
-        return chosen;
-    }
-
-    if (availableGames.length > 0) {
-        return availableGames[Math.floor(Math.random() * availableGames.length)];
-    }
-
-    return 'Space Blaster';
-}
-
-function updateMetricsDisplay(sent, total, success, errors, latency) {
+function updateMetrics(sent, total, success, errors, latency) {
     if (metricSent) metricSent.textContent = String(sent);
     if (metricTotal) metricTotal.textContent = String(total);
     if (metricSuccess) metricSuccess.textContent = String(success);
@@ -530,14 +493,15 @@ function updateMetricsDisplay(sent, total, success, errors, latency) {
     if (metricLatency) metricLatency.textContent = `${avg} ms`;
 
     if (progressFill) {
-        const pct = Math.min(100, Math.round((sent / total) * 100));
-        progressFill.style.width = `${pct}%`;
+        const percent = Math.min(100, Math.round((sent / total) * 100));
+        progressFill.style.width = `${percent}%`;
     }
 }
 
 function resetMetrics(total) {
     totalLatencySum = 0;
     latencyCount = 0;
+    requestCounter = 0;
     if (metricSent) metricSent.textContent = '0';
     if (metricTotal) metricTotal.textContent = String(total);
     if (metricSuccess) metricSuccess.textContent = '0';
@@ -546,60 +510,43 @@ function resetMetrics(total) {
     if (progressFill) progressFill.style.width = '0%';
 }
 
-function handleStopSimulator() {
-    if (isRunning) {
-        shouldStop = true;
-        setStatus('Stopping simulator...', 'loading');
-    }
-}
-
-function handleClearLog() {
-    if (simLogBody) {
-        requestCounter = 0;
-        simLogBody.replaceChildren();
-        const emptyRow = document.createElement('tr');
-        const emptyTd = document.createElement('td');
-        emptyTd.colSpan = 7;
-        emptyTd.style.textAlign = 'center';
-        emptyTd.style.color = 'var(--text-muted)';
-        emptyTd.style.padding = '2rem';
-        emptyTd.textContent = 'Log cleared. Click "Send 100 Random Scores" to run a new test.';
-        emptyRow.appendChild(emptyTd);
-        simLogBody.appendChild(emptyRow);
-    }
-    resetMetrics(100);
-    setStatus('Ready to start simulator', '');
-}
-
 function setSimulatorRunningState(running) {
     isRunning = running;
     shouldStop = false;
 
     if (btnStartBatch) btnStartBatch.disabled = running;
     if (btnRunEdgeCases) btnRunEdgeCases.disabled = running;
-    if (btnClearLog) btnClearLog.disabled = running;
-    if (simBatchCount) simBatchCount.disabled = running;
-    if (simGameSelect) simGameSelect.disabled = running;
     if (btnStop) btnStop.disabled = !running;
+    if (simGameSelect) simGameSelect.disabled = running;
+    if (simBatchCount) simBatchCount.disabled = running;
 }
 
-function setStatus(text, mode) {
-    if (!simStatusText) return;
-    simStatusText.textContent = text;
-    if (mode === 'error') {
-        simStatusText.style.color = 'var(--state-error-text)';
-    } else if (mode === 'success') {
-        simStatusText.style.color = 'var(--state-success-text)';
-    } else if (mode === 'loading') {
-        simStatusText.style.color = 'var(--state-loading-text)';
-    } else {
-        simStatusText.style.color = 'var(--text-secondary)';
+function handleStopSimulator() {
+    if (isRunning) {
+        shouldStop = true;
+        setStatus('Stopping simulator...', 'warning');
+        if (btnStop) btnStop.disabled = true;
     }
 }
 
-// Initialize when ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSimulator);
-} else {
-    initSimulator();
+function handleClearLog() {
+    if (simLogBody) {
+        simLogBody.replaceChildren();
+        const emptyRow = document.createElement('tr');
+        const emptyTd = document.createElement('td');
+        emptyTd.colSpan = 8;
+        emptyTd.className = 'empty-state';
+        emptyTd.textContent = 'Log cleared. Launch a batch to observe requests.';
+        emptyRow.appendChild(emptyTd);
+        simLogBody.appendChild(emptyRow);
+    }
+    requestCounter = 0;
 }
+
+function setStatus(text, type = 'normal') {
+    if (!simStatusText) return;
+    simStatusText.textContent = text;
+    simStatusText.style.color = type === 'success' ? '#86efac' : (type === 'warning' ? '#fde047' : (type === 'running' ? '#38bdf8' : 'var(--text-muted)'));
+}
+
+document.addEventListener('DOMContentLoaded', initSimulator);

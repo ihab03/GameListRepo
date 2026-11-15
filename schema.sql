@@ -43,19 +43,57 @@ CREATE TABLE IF NOT EXISTS `rate_limits` (
     PRIMARY KEY (`ip_address`, `endpoint`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Studio Game Registry table
+CREATE TABLE IF NOT EXISTS `games` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `slug` VARCHAR(100) NOT NULL UNIQUE,
+    `title` VARCHAR(100) NOT NULL UNIQUE,
+    `genre` VARCHAR(50) NOT NULL DEFAULT 'Arcade',
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Studio Admin Moderation & Action Audit Log table
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `admin_id` INT NOT NULL,
+    `admin_username` VARCHAR(50) NOT NULL,
+    `action` VARCHAR(50) NOT NULL,
+    `target_id` INT NULL,
+    `details` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_audit_created` (`created_at` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Clear tables before re-seeding
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE `scores`;
 TRUNCATE TABLE `users`;
 TRUNCATE TABLE `rate_limits`;
+TRUNCATE TABLE `games`;
+TRUNCATE TABLE `audit_logs`;
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- Seed Default Studio Games:
+INSERT INTO `games` (`id`, `slug`, `title`, `genre`, `is_active`) VALUES
+(1, 'space-blaster', 'Space Blaster', 'Sci-Fi Arcade', 1),
+(2, 'dungeon-runner', 'Dungeon Runner', 'Action RPG', 1),
+(3, 'drift-king', 'Drift King', 'Racing Simulation', 1),
+(4, 'cyber-strike', 'Cyber Strike', 'Tactical Shooter', 1),
+(5, 'neon-horizon', 'Neon Horizon', 'Retro Platformer', 1);
+
+-- Seed Initial Moderation Audit Trail:
+INSERT INTO `audit_logs` (`admin_id`, `admin_username`, `action`, `target_id`, `details`, `created_at`) VALUES
+(1, 'admin', 'system_init', NULL, 'Initialized Hyper Arena game registry and system configuration', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(1, 'admin', 'add_game', 4, 'Registered new title: Cyber Strike (Tactical Shooter)', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(1, 'admin', 'approve_score', 1, 'Approved score submission 9850 for player AcePilot in Space Blaster', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- Seed Default Accounts:
 -- Admin: username 'admin', password 'Admin123!'
 -- Player: username 'player1', password 'Player123!'
 INSERT INTO `users` (`id`, `username`, `password_hash`, `role`) VALUES
-(1, 'admin', '$2y$12$47H0cZP6BAWvgrx8pKaWEe4e9HMkTbgR1ceyIUpbt4wLRWFk5ZXEK', 'admin'),
-(2, 'player1', '$2y$12$Ls65ZbhNCC4Ax0arQXdt2eU11IzstEVwQ9E0zWWPLoNwl6zghDH8u', 'player');
+(1, 'admin', '$2y$12$ILbm674kghjDmpv.2y.BL.a/Fb.dCL8fay4PjvavnLYIokc7TS.Cq', 'admin'),
+(2, 'player1', '$2y$12$Q1DUeJOQtY5SaaoJhwje1OTp7.A0xHeDKJ3x3rozMisVbWXLsv68m', 'player');
 
 -- Seed Approved Scores across 3 games
 -- Pre-approved so the public leaderboard is immediately active and testable
